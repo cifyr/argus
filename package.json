@@ -1,0 +1,36 @@
+{
+  "name": "text-to-call",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --import tsx --test test/*.test.ts",
+    "dev": "tsx src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "login": "tsx scripts/login.ts",
+    "gv:inspect": "tsx scripts/gv-inspect.ts",
+    "test:call": "tsx scripts/test-call.ts",
+    "test:sms": "tsx scripts/test-sms.ts",
+    "tunnel": "ngrok http 3000",
+    "web": "tsx src/web-only.ts",
+    "gv:dryrun": "tsx scripts/gv-dryrun.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "playwright": "^1.62.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.4.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}
