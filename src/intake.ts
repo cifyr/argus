@@ -5,12 +5,11 @@ import { logger } from "./logger.js";
 
 // The intake conversation: one question per SMS. Step index maps to the field being collected.
 export const STEPS = [
-  { field: "name", ask: (svc: string) => `This is the ${svc} help line. We'll set up your emergency profile so we can help fast if you ever text us. First: what's your full name?` },
-  { field: "medical", ask: () => `Thanks. Any medical conditions we should know about (e.g., diabetes, asthma, heart condition)? Reply "none" if not.` },
+  { field: "name", ask: (_svc: string) => `What's your full name?` },
+  { field: "medical", ask: () => `Any medical conditions we should know about (e.g., diabetes, asthma, heart condition)? Reply "none" if not.` },
   { field: "allergies", ask: () => `Any allergies (medications, food, etc.)? Reply "none" if not.` },
   { field: "medications", ask: () => `Any medications you take regularly? Reply "none" if not.` },
   { field: "emergency_contact", ask: () => `Who is your emergency contact? Reply with their name and phone number.` },
-  { field: "location", ask: (svc: string) => `Last step: please share your location with ${svc} in the Find My app (Find My > People > Share My Location). Reply "done" when you've shared it.` },
 ] as const;
 
 export interface IntakeResult { reply: string | null; done: boolean }
@@ -22,9 +21,7 @@ export async function advanceIntake(db: Db, model: string, serviceName: string, 
   // If we've already asked step N (fields[step-1]) store the answer for it.
   if (step > 0 && step <= STEPS.length) {
     const prev = STEPS[step - 1]!;
-    if (prev.field === "location") {
-      // location step just needs acknowledgement; nothing to store
-    } else if (prev.field === "name") {
+    if (prev.field === "name") {
       const nm = answer.trim();
       const friend = matchFriendName(nm);
       db.updatePerson(person.phone, friend ? { name: nm, findmy_name: friend } : { name: nm });
@@ -47,7 +44,7 @@ export async function advanceIntake(db: Db, model: string, serviceName: string, 
     ].filter(Boolean);
     const summary = parts.length ? parts.join("; ") + "." : "No medical details on file.";
     db.updatePerson(person.phone, { intake_done: 1, notes: summary });
-    return { reply: `You're all set${fresh.name ? `, ${fresh.name.split(" ")[0]}` : ""}. In an emergency, just text us what's happening and we'll get help to you right away.`, done: true };
+    return { reply: `Thanks${fresh.name ? `, ${fresh.name.split(" ")[0]}` : ""}. ${findMyReminder()}`, done: true };
   }
 
   const next = STEPS[step]!;
@@ -55,7 +52,14 @@ export async function advanceIntake(db: Db, model: string, serviceName: string, 
   return { reply: next.ask(serviceName), done: false };
 }
 
-// Start intake for a brand-new person: send the first question.
+// First contact ("join"): welcome, send the Find My location request, and ask the first detail.
 export function firstQuestion(serviceName: string): string {
-  return STEPS[0]!.ask(serviceName);
+  return `You're now registered with the ${serviceName} help line. Two things:\n\n` +
+    `1) Please SHARE YOUR LOCATION with us now in Find My: open Find My > People > Share My Location, and share with this number. That lets us find you fast in an emergency, even if you move.\n\n` +
+    `2) So we can help you best, what's your full name?`;
+}
+
+// Optional reminder appended when intake completes.
+export function findMyReminder(): string {
+  return `You're all set. If you haven't yet, please share your location with us in Find My so we can locate you in an emergency. Just text us anytime you need help.`;
 }
