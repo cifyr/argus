@@ -95,7 +95,8 @@ async function renderHelp() {
   if (!d.requests.length) { el.innerHTML = '<div class="card"><div class="empty">No help requests. When a registered person texts for help, it appears here.</div></div>'; return; }
   el.innerHTML = '<div class="card">' + d.requests.map(r => {
     const p = r.person;
-    const loc = r.findMyLocation ? `Find My: <span class="loc">${esc(r.findMyLocation)}</span>` : (p?.findmy_name ? `Find My name set (${esc(p.findmy_name)}) - click Rescan` : "No Find My mapping");
+    const addr = r.address ? `<span class="loc">${esc(r.address.address)}</span> &middot; <a href="${esc(r.address.mapsUrl)}" target="_blank" rel="noopener">map</a>` : "";
+    const loc = r.findMyLocation ? `Find My: ${addr || '<span class="loc">'+esc(r.findMyLocation)+'</span>'}${addr?` <span class="muted">near ${esc(r.findMyLocation)}</span>`:''}` : (p?.findmy_name ? `Find My name set (${esc(p.findmy_name)}) - click Rescan` : "No Find My mapping");
     return `<div class="req ${r.status==='handled'?'handled':''}" data-id="${r.id}" data-phone="${esc(r.phone)}">
       <h3>${esc(p?.name || r.phone)} <span class="muted">${esc(r.phone)} &middot; ${new Date(r.at).toLocaleTimeString()}</span></h3>
       <div class="msg">${esc(r.text)}</div>

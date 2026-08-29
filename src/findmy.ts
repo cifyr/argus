@@ -61,3 +61,42 @@ export function locationForName(name: string): string | null {
   for (const [n, place] of cache) if (n.toLowerCase() === lc || n.toLowerCase().startsWith(lc)) return place;
   return null;
 }
+
+const UA = "Guardian911/0.1 (personal emergency tool)";
+const CHAINS = /\b(qdoba|subway|starbucks|mcdonald|chipotle|panera|chick-fil-a|dominos?|taco bell|fedex|ups store|walgreens|cvs|dunkin|wendy|burger king|7-eleven)\b/i;
+const geoCache = new Map<string, { address: string; lat: number; lon: number; mapsUrl: string } | null>();
+
+// Turn a "A; B; C" landmark string into a real street address by geocoding the nearest
+// distinctive (non-chain) landmark. Cached per landmark string so polling stays fast.
+export async function addressForLandmarks(landmarks: string): Promise<{ address: string; lat: number; lon: number; mapsUrl: string } | null> {
+  if (!landmarks) return null;
+  if (geoCache.has(landmarks)) return geoCache.get(landmarks)!;
+  const parts = landmarks.split(";").map((x) => x.trim()).filter(Boolean);
+  // Try distinctive landmarks first, then chains, until one geocodes to a real address.
+  const ordered = [...parts.filter((p) => !CHAINS.test(p)), ...parts.filter((p) => CHAINS.test(p))];
+  for (const target of ordered) {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(target)}&countrycodes=us&format=jsonv2&addressdetails=1&limit=1`;
+      const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(7000) });
+      if (!res.ok) continue;
+      const arr = (await res.json()) as { lat: string; lon: string; address?: Record<string, string> }[];
+      if (!arr.length) continue;
+      const a = arr[0]!;
+      const ad = a.address ?? {};
+      const street = [ad.house_number, ad.road].filter(Boolean).join(" ");
+      const address = [
+        street || ad.building || target,
+        ad.city || ad.town || ad.village || ad.suburb,
+        [ad.state, ad.postcode].filter(Boolean).join(" "),
+      ].filter(Boolean).join(", ");
+      const result = { address, lat: Number(a.lat), lon: Number(a.lon), mapsUrl: `https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}` };
+      geoCache.set(landmarks, result);
+      logger.info("findmy.geocoded", { target, address });
+      return result;
+    } catch (err) {
+      logger.warn("findmy.geocode_try_failed", { target, err: (err as Error).message });
+    }
+  }
+  geoCache.set(landmarks, null);
+  return null;
+}
