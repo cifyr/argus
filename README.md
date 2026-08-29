@@ -25,12 +25,12 @@ registered person texts "help ..."
 
 ## What it does
 
-- **Reads your incoming texts** from Messages (`~/Library/Messages/chat.db`, read-only).
-- **Runs intake** automatically for any new number: one question per text, answers cleaned/extracted by a local Ollama model, stored in SQLite.
-- **Detects emergencies** — explicit help words any time; the LLM classifier only runs for already-registered people, so medical intake answers are never mistaken for emergencies.
-- **Reads Find My location** (see the Find My note) and shows it on the help request.
-- **ZIP → dispatch lookup (open data)** — type a ZIP and "Search open data" pulls nearby police departments and their phone numbers from **OpenStreetMap** (geocoded via Nominatim, stations via the Overpass API), nearest first. "Use" saves one for reuse; 911 is the fallback.
-- **Operator console** at `http://localhost:4200`: Help requests, People (registry), and Dispatch numbers.
+- **Reads your incoming texts** from Messages (`~/Library/Messages/chat.db`, read-only) and processes them live (polls every few seconds).
+- **Join by texting anything.** A new number is registered on first contact; the first reply both **asks for their details** and **requests they share location in Find My** (with instructions). Intake then collects name, conditions, allergies, medications, and emergency contact — one question per text, cleaned by a local Ollama model.
+- **Detects emergencies** — explicit help words any time; the LLM classifier only runs for already-registered people, so medical intake answers are never mistaken for emergencies. The auto-reply tells them help is being sent to their location and that they can keep moving (since Find My tracks them live).
+- **Find My location → real address.** Resolves a texter's location automatically (matching their name to a Find My friend), turns the nearest landmarks into a **geocoded street address + Google Maps link**, and keeps it live (refreshed while you watch).
+- **ZIP → dispatch numbers, automatic.** The ZIP from the Find My address pre-fills the dispatch search and the nearby police numbers **load automatically** from **OpenStreetMap** (Nominatim + Overpass), nearest first. "Use" attaches one; 911 is the fallback.
+- **Operator console** at `http://localhost:4200`: **Help requests**, **Live feed** (every text in/out as it arrives), **People** (registry, with Find My name mapping), and **Dispatch numbers**.
 
 ## Requirements
 
@@ -48,6 +48,7 @@ npm run dev              # starts the worker + console at http://localhost:4200
 ```
 
 - `AUTO_REPLY=true` (default) sends intake questions/acks over SMS via Messages. Set `false` to log replies without sending while you test.
+- `REPLY_ALLOWLIST` (optional) — comma-separated numbers that may receive auto-replies; everyone else is still processed and logged but never texted. Blank = reply to everyone (when `AUTO_REPLY=true`). Handy for a controlled test: `AUTO_REPLY=true REPLY_ALLOWLIST="+15551234567" npm run dev`.
 - `OPERATOR_TOKEN` (optional) locks the console; open it as `http://localhost:4200/?token=...`.
 
 ## Find My location

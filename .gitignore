@@ -15,3 +15,5 @@ desk-config.json
 vendor/
 .claude/settings.local.json
 desk-people.json
+*.sqlite
+*.sqlite-*
