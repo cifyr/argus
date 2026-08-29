@@ -8,6 +8,58 @@ A companion **phone-login web app** lets people share their location, so when th
 
 ---
 
+## Two ways to run it
+
+**Relay Desk (recommended, uses your real number).** A local control panel on your Mac with an on/off toggle. While on, it watches your Messages inbox and, when someone texts you, calls a number you choose in a human voice and reads out what they need. No Google Voice, no cloud. See **Relay Desk** below.
+
+**Google Voice relay (no second device).** Everything runs through a Google Voice number via browser automation. See **How it works** further down.
+
+---
+
+## Relay Desk
+
+```
+someone texts your iPhone
+        v
+Messages on your Mac (chat.db, read-only)   <-- toggle ON
+        v
+Ollama writes "This is an automated message because <sender> needs help ..."
+        v
+Kokoro neural TTS renders a human voice (WAV)
+        v
+Continuity places a real call from your iPhone to a number you choose
+        v
+the speech is played into the call through BlackHole (as the mic)
+```
+
+Open the panel, set who to call, flip it on. When a new text arrives it generates the script, speaks it, dials, and reads it into the call. The sender's last shared location is included when available (via the companion location app; Apple's Find My cache is encrypted and cannot be read programmatically).
+
+### Requirements
+
+- **macOS** with **Messages** signed in and receiving your texts (turn on Text Message Forwarding on the iPhone for SMS; iMessages arrive automatically).
+- **Full Disk Access** for your terminal / the app, so it can read `~/Library/Messages/chat.db`.
+- **Continuity calling**: iPhone nearby, same Apple ID, "Calls from iPhone" enabled on the Mac (FaceTime > Settings).
+- **[BlackHole 2ch](https://existential.audio/blackhole/)** virtual audio device (`brew install blackhole-2ch`).
+- **[Ollama](https://ollama.com)** running locally with a small model (`ollama pull llama3.2:3b` or `gemma2:2b`).
+- **Kokoro TTS** (bundled setup): a Python venv under `vendor/tts` with `kokoro-onnx` plus the model files. Falls back to the macOS `say` voice if absent.
+- `SwitchAudioSource` (`brew install switchaudio-osx`) for routing audio to BlackHole.
+
+### Run
+
+```bash
+npm run desk        # opens the control panel at http://localhost:4100
+```
+
+In the panel: enter the number to call, optionally an allow-list of senders, pick a voice, and use **Hear the voice** to test without calling. Set FaceTime's microphone to **BlackHole 2ch** so the spoken audio goes into the call. Then flip the toggle **ON** and text yourself from another phone.
+
+Only texts that arrive **after** you turn it on trigger a call. There is an hourly rate limit and an optional sender allow-list so not every message dials out.
+
+### Sharing a texter's location
+
+Apple encrypts the Find My cache, so a texter's location can only be known if they share it through the companion app (`npm run web`, or the iOS app under `ios/`). When they have, the Desk looks it up by their number and the call includes where they are.
+
+---
+
 ## How it works
 
 ```mermaid
