@@ -10,3 +10,6 @@ relay.sqlite*
 .env
 .env.*
 !.env.example
+
+desk-config.json
+vendor/

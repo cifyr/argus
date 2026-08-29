@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay Desk</title>
+<style>
+  :root { --crimson:#B11226; --ember:#E2401B; --ink:#171717; --muted:#6B6B6B; --line:#E6E3E1; --ok:#1a7f37; --bad:#B11226; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; color:var(--ink); background:#fafafa; }
+  header { display:flex; align-items:center; gap:12px; padding:16px 22px; border-bottom:1px solid var(--line); background:#fff; }
+  .mark { width:34px; height:34px; background:var(--crimson); color:#fff; font-weight:700; display:grid; place-items:center; }
+  main { max-width:760px; margin:0 auto; padding:22px; }
+  .card { background:#fff; border:1px solid var(--line); padding:18px 20px; margin-bottom:18px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin:0 0 14px; }
+  .toggle-row { display:flex; align-items:center; justify-content:space-between; }
+  .state { font-size:24px; font-weight:700; }
+  .state.on { color:var(--ok); } .state.off { color:var(--muted); }
+  .switch { position:relative; width:84px; height:44px; cursor:pointer; }
+  .switch input { display:none; }
+  .slider { position:absolute; inset:0; background:#ccc; border-radius:44px; transition:.2s; }
+  .slider::before { content:""; position:absolute; height:36px; width:36px; left:4px; top:4px; background:#fff; border-radius:50%; transition:.2s; }
+  input:checked + .slider { background:var(--ok); }
+  input:checked + .slider::before { transform:translateX(40px); }
+  label.f { display:block; font-size:13px; font-weight:600; margin:12px 0 5px; }
+  input.t, select.t { width:100%; font-size:16px; padding:10px; border:1px solid var(--line); border-bottom:2px solid var(--ink); background:#fff; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  button { padding:11px 16px; font-weight:600; color:#fff; background:var(--crimson); border:0; cursor:pointer; font-size:14px; }
+  button.sec { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .checks { display:flex; flex-wrap:wrap; gap:8px; }
+  .chk { font-size:12px; padding:4px 10px; border:1px solid var(--line); }
+  .chk.ok { color:var(--ok); border-color:var(--ok); } .chk.bad { color:var(--bad); border-color:var(--bad); }
+  .row { display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid var(--line); }
+  .row .o { font-weight:600; } .o.called{color:var(--ok);} .o.error{color:var(--bad);} .o.skipped{color:var(--muted);}
+  .muted { color:var(--muted); font-size:12px; }
+  .err { color:var(--bad); font-weight:600; font-size:13px; }
+</style>
+</head>
+<body>
+<header><div class="mark">R</div><strong>Relay Desk</strong><span class="muted" id="clock" style="margin-left:auto"></span></header>
+<main>
+  <div class="card">
+    <div class="toggle-row">
+      <div><div class="state off" id="state">OFF</div><div class="muted" id="stateDetail">Not watching for texts</div></div>
+      <label class="switch"><input type="checkbox" id="toggle"><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Readiness</h2>
+    <div class="checks" id="checks"></div>
+    <div class="muted" id="checksHint" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Who to call</h2>
+    <div class="grid2">
+      <div><label class="f">Number to call (E.164)</label><input class="t" id="callNumber" placeholder="+15551234567"></div>
+      <div><label class="f">Label</label><input class="t" id="callName" placeholder="Mom"></div>
+    </div>
+    <label class="f">Only these senders may trigger a call (comma-separated; blank = anyone who texts you)</label>
+    <input class="t" id="allowedSenders" placeholder="+15559990000, +15551112222">
+    <div class="grid2" style="margin-top:12px">
+      <div><label class="f">Voice</label>
+        <select class="t" id="voice">
+          <option value="af_heart">af_heart (warm female)</option>
+          <option value="af_bella">af_bella (female)</option>
+          <option value="am_michael">am_michael (male)</option>
+          <option value="am_onyx">am_onyx (deep male)</option>
+          <option value="bf_emma">bf_emma (British female)</option>
+        </select>
+      </div>
+      <div><label class="f">Times to speak</label><input class="t" id="repeat" type="number" min="1" max="5"></div>
+    </div>
+    <div style="margin-top:14px"><button id="save">Save settings</button> <span class="muted" id="saveMsg"></span></div>
+  </div>
+
+  <div class="card">
+    <h2>Test</h2>
+    <label class="f">Sample text message</label>
+    <input class="t" id="testText" value="yo running 20 late start w/o me">
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+      <button class="sec" id="testVoice">Hear the voice (no call)</button>
+      <button id="testCall">Place a real call now</button>
+    </div>
+    <div id="testOut" class="muted" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Recent activity</h2>
+    <div id="activity"><div class="muted">Nothing yet.</div></div>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+async function api(path, body) {
+  const opt = body ? { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) } : {};
+  const res = await fetch(path, opt); const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || ("HTTP " + res.status)); return json;
+}
+const CHECKS = [["ollama","Ollama running"],["model","Model pulled"],["kokoro","Human voice (Kokoro)"],["blackhole","BlackHole audio"],["messages","Messages access"]];
+let dirty = false;
+function fill(s) {
+  if (dirty) return;
+  $("callNumber").value = s.callNumber || ""; $("callName").value = s.callName || "";
+  $("allowedSenders").value = (s.allowedSenders || []).join(", ");
+  $("voice").value = s.voice || "af_heart"; $("repeat").value = s.repeat ?? 2;
+}
+async function refresh() {
+  try {
+    const d = await api("/api/status");
+    const on = d.settings.enabled; $("toggle").checked = on;
+    $("state").textContent = on ? "ON" : "OFF"; $("state").className = "state " + (on ? "on" : "off");
+    $("stateDetail").textContent = on ? ("Watching your texts - will call " + (d.settings.callName || d.settings.callNumber || "(no number set)")) : "Not watching for texts";
+    $("checks").innerHTML = CHECKS.map(([k,label]) => `<span class="chk ${d.readiness[k]?"ok":"bad"}">${d.readiness[k]?"✓":"✗"} ${label}</span>`).join("");
+    const miss = CHECKS.filter(([k]) => !d.readiness[k]).map(([,l]) => l);
+    $("checksHint").textContent = miss.length ? ("Fix before turning on: " + miss.join(", ")) : "All systems go.";
+    fill(d.settings);
+    $("activity").innerHTML = d.activity.length ? d.activity.map((a) => `<div class="row"><span>${new Date(a.at).toLocaleTimeString()} &middot; <b>${esc(a.sender)}</b>: ${esc((a.text||"").slice(0,44))}${a.script?`<br><span class="muted">said: ${esc(a.script.slice(0,80))}</span>`:""}</span><span class="o ${a.outcome}">${a.outcome}${a.detail?`<br><span class="muted">${esc(a.detail)}</span>`:""}</span></div>`).join("") : '<div class="muted">Nothing yet.</div>';
+  } catch (e) { $("stateDetail").textContent = "Cannot reach the desk server: " + e.message; }
+}
+$("toggle").onchange = async (e) => { try { await api("/api/toggle", { enabled: e.target.checked }); dirty = false; refresh(); } catch (err) { alert(err.message); } };
+["callNumber","callName","allowedSenders","voice","repeat"].forEach((id) => $(id).addEventListener("input", () => dirty = true));
+$("save").onclick = async () => {
+  try {
+    await api("/api/settings", {
+      callNumber: $("callNumber").value.trim(), callName: $("callName").value.trim(),
+      allowedSenders: $("allowedSenders").value.split(",").map((s) => s.trim()).filter(Boolean),
+      voice: $("voice").value, repeat: Number($("repeat").value) || 2,
+    });
+    dirty = false; $("saveMsg").textContent = "saved"; setTimeout(() => $("saveMsg").textContent = "", 1500); refresh();
+  } catch (e) { $("saveMsg").textContent = e.message; }
+};
+$("testVoice").onclick = async () => {
+  $("testOut").textContent = "generating + speaking..."; $("testVoice").disabled = true;
+  try { const r = await api("/api/test-voice", { text: $("testText").value }); $("testOut").textContent = "spoke: " + r.script; }
+  catch (e) { $("testOut").innerHTML = '<span class="err">' + esc(e.message) + '</span>'; } finally { $("testVoice").disabled = false; }
+};
+$("testCall").onclick = async () => {
+  if (!confirm("This places a REAL call to your saved number and reads the sample text. Continue?")) return;
+  $("testOut").textContent = "calling..."; $("testCall").disabled = true;
+  try { const r = await api("/api/test-call", { text: $("testText").value, sender: "manual test" }); $("testOut").textContent = r.activity.outcome + ": " + (r.activity.detail || "") + (r.activity.script ? " | said: " + r.activity.script : ""); }
+  catch (e) { $("testOut").innerHTML = '<span class="err">' + esc(e.message) + '</span>'; } finally { $("testCall").disabled = false; refresh(); }
+};
+setInterval(() => $("clock").textContent = new Date().toLocaleTimeString(), 1000);
+refresh(); setInterval(refresh, 3000);
+</script>
+</body>
+</html>

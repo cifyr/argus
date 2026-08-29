@@ -14,7 +14,8 @@
     "test:sms": "tsx scripts/test-sms.ts",
     "tunnel": "ngrok http 3000",
     "web": "tsx src/web-only.ts",
-    "gv:dryrun": "tsx scripts/gv-dryrun.ts"
+    "gv:dryrun": "tsx scripts/gv-dryrun.ts",
+    "desk": "tsx src/desk/main.ts"
   },
   "keywords": [],
   "author": "",
