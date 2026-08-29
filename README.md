@@ -12,15 +12,15 @@ A companion **phone-login web app** lets people share their location, so when th
 
 ```mermaid
 flowchart LR
-  A[Someone texts your\nGoogle Voice number] --> B[Poller reads the<br/>GV inbox in Chrome]
-  B --> C{Known sender?\nrecent location?}
-  C --> D[Claude writes a\nspoken script\n(optional)]
-  D --> E[macOS 'say' renders\na WAV clip]
-  E --> F[Place a call from the\nGoogle Voice web dialer]
-  F --> G[TTS clip is injected\nas the microphone]
-  G --> H[Recipient hears the\nmessage read aloud]
-  I[Location PWA] -. shares location .-> C
-  F -. call outcome .-> J[Text the sender back]
+  A["Someone texts your<br/>Google Voice number"] --> B["Poller reads the<br/>GV inbox in Chrome"]
+  B --> C{"Known sender?<br/>Recent location?"}
+  C --> D["Claude writes a<br/>spoken script<br/>(optional)"]
+  D --> E["macOS 'say' renders<br/>a WAV clip"]
+  E --> F["Place a call from the<br/>Google Voice web dialer"]
+  F --> G["TTS clip is injected<br/>as the microphone"]
+  G --> H["Recipient hears the<br/>message read aloud"]
+  I["Location PWA"] -. "shares location" .-> C
+  F -. "call outcome" .-> J["Text the sender back"]
 ```
 
 1. **Inbound text.** Anyone texts your Google Voice number.
