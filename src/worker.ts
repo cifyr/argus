@@ -65,7 +65,7 @@ export class Worker {
     if (emergency) {
       this.db.openHelpRequest(from, text);
       logger.warn("worker.help_request", { from, text: text.slice(0, 80) });
-      await this.reply(from, "We got your message and we're getting help to you. Tell us anything else you can, and stay where you are.");
+      await this.reply(from, "Emergency services are being sent to your location. You can keep moving to stay safe - we can see your live location. Tell us anything else you can about what's happening.");
       return;
     }
 
