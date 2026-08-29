@@ -121,9 +121,9 @@ export class Worker {
       const wav = await pickSynth(this.settings.ttsEngine)(script, this.settings.voice);
       this.callTimes.push(Date.now());
       await placeCall(this.settings.callNumber);
-      await new Promise((r) => setTimeout(r, 1500));
-      await confirmFaceTimeCall();
-      await new Promise((r) => setTimeout(r, Math.max(0, this.settings.connectDelayMs - 1500)));
+      // The Continuity "Click to Call" banner can lag; try to auto-accept it a few times.
+      for (let i = 0; i < 3; i++) { await new Promise((r) => setTimeout(r, 1500)); await confirmFaceTimeCall(); }
+      await new Promise((r) => setTimeout(r, Math.max(0, this.settings.connectDelayMs - 4500)));
       await playIntoBlackhole(wav, this.settings.repeat);
       const a: Activity = { at: Date.now(), sender: msg.sender, text: msg.text, script, outcome: "called", detail: `called ${this.settings.callNumber}` };
       this.log(a); logger.info("desk.worker.called", { sender: msg.sender }); return a;

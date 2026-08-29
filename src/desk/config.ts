@@ -29,7 +29,7 @@ const DEFAULTS: DeskSettings = {
   ollamaModel: "gemma2:2b",
   ttsEngine: "kokoro",
   pollMs: 4000,
-  connectDelayMs: 7000,
+  connectDelayMs: 14000,
   maxPerHour: 20,
   repeat: 2,
   findMyEnabled: true,
