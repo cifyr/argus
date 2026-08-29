@@ -6,6 +6,7 @@ import { ollamaReady } from "./ollama.js";
 import { kokoroReady, pickSynth } from "./tts.js";
 import { blackholePresent, playAudible } from "./audio.js";
 import { chatDbReadable } from "./messages.js";
+import { findMyReady, findMyFriends, findMyLastScan, refreshFindMy } from "./findmy.js";
 import { generateScript } from "./ollama.js";
 import { logger } from "../logger.js";
 
@@ -28,7 +29,9 @@ export function createDeskApp(worker: Worker) {
         kokoro: kokoroReady(),
         blackhole: await blackholePresent(),
         messages: chatDbReadable(),
+        findMy: findMyReady(),
       },
+      findMy: { friends: findMyFriends(), lastScan: findMyLastScan(), enabled: s.findMyEnabled },
       activity: worker.activity,
     });
   });
@@ -45,6 +48,8 @@ export function createDeskApp(worker: Worker) {
     for (const k of ["callNumber", "callName", "voice", "ollamaModel", "ttsEngine"] as const) if (typeof b[k] === "string") patch[k] = b[k];
     for (const k of ["pollMs", "connectDelayMs", "maxPerHour", "repeat"] as const) if (typeof b[k] === "number") patch[k] = b[k];
     if (Array.isArray(b.allowedSenders)) patch.allowedSenders = b.allowedSenders.filter((x: unknown) => typeof x === "string");
+    if (typeof b.findMyEnabled === "boolean") patch.findMyEnabled = b.findMyEnabled;
+    if (b.senderNames && typeof b.senderNames === "object") patch.senderNames = b.senderNames;
     worker.update(patch);
     res.json({ ok: true, settings: worker.getSettings() });
   });
@@ -71,6 +76,11 @@ export function createDeskApp(worker: Worker) {
     if (!text) { res.status(400).json({ error: "text required" }); return; }
     const a = await worker.handle({ rowid: -1, sender, text, service: "test" });
     res.status(a.outcome === "error" ? 500 : 200).json({ activity: a });
+  });
+
+  app.post("/api/findmy/refresh", async (_req, res) => {
+    await refreshFindMy(true);
+    res.json({ ok: true, friends: findMyFriends(), lastScan: findMyLastScan() });
   });
 
   return app;

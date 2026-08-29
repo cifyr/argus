@@ -13,3 +13,4 @@ relay.sqlite*
 
 desk-config.json
 vendor/
+.claude/settings.local.json

@@ -14,6 +14,8 @@ export interface DeskSettings {
   connectDelayMs: number;      // wait after dialing before speaking
   maxPerHour: number;          // safety rate limit
   repeat: number;              // times to speak the message
+  findMyEnabled: boolean;
+  senderNames: Record<string, string>;  // phone (last 10 digits ok) -> Find My friend name
 }
 
 const FILE = path.resolve(process.cwd(), "desk-config.json");
@@ -30,6 +32,8 @@ const DEFAULTS: DeskSettings = {
   connectDelayMs: 7000,
   maxPerHour: 20,
   repeat: 2,
+  findMyEnabled: true,
+  senderNames: {},
 };
 
 export function loadSettings(): DeskSettings {

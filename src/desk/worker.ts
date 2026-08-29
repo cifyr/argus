@@ -2,6 +2,7 @@ import { loadSettings, saveSettings, type DeskSettings } from "./config.js";
 import { currentMaxRowId, newInboundSince, type InboundText } from "./messages.js";
 import { generateScript } from "./ollama.js";
 import { locationForSender } from "./location.js";
+import { locationForName, refreshFindMy } from "./findmy.js";
 import { pickSynth } from "./tts.js";
 import { playIntoBlackhole } from "./audio.js";
 import { placeCall, confirmFaceTimeCall } from "./caller.js";
@@ -40,6 +41,7 @@ export class Worker {
     this.watermark = await currentMaxRowId().catch(() => 0);
     this.settings.enabled = true;
     saveSettings(this.settings);
+    if (this.settings.findMyEnabled) void refreshFindMy(true);
     logger.info("desk.worker.enabled", { watermark: this.watermark, callNumber: this.settings.callNumber });
     this.timer = setInterval(() => void this.tick(), this.settings.pollMs);
   }
@@ -62,6 +64,20 @@ export class Worker {
     const cutoff = Date.now() - 3600_000;
     this.callTimes = this.callTimes.filter((t) => t > cutoff);
     return this.callTimes.length < this.settings.maxPerHour;
+  }
+
+  private async resolveLocation(sender: string): Promise<string | null> {
+    if (this.settings.findMyEnabled) {
+      const digits = sender.replace(/\D/g, "").slice(-10);
+      const name = this.settings.senderNames[sender] || this.settings.senderNames[digits]
+        || Object.entries(this.settings.senderNames).find(([k]) => k.replace(/\D/g, "").slice(-10) === digits)?.[1];
+      if (name) {
+        const place = locationForName(name);
+        if (place) return `near ${place}`;
+        void refreshFindMy(); // warm the cache for next time
+      }
+    }
+    return locationForSender(sender);
   }
 
   private senderLabel(sender: string): string {
@@ -100,7 +116,7 @@ export class Worker {
     }
     logger.info("desk.worker.handle", { sender: msg.sender, textLength: msg.text.length });
     try {
-      const location = await locationForSender(msg.sender);
+      const location = await this.resolveLocation(msg.sender);
       const script = await generateScript(this.settings.ollamaModel, { senderLabel: this.senderLabel(msg.sender), text: msg.text, location });
       const wav = await pickSynth(this.settings.ttsEngine)(script, this.settings.voice);
       this.callTimes.push(Date.now());

@@ -76,6 +76,21 @@
   </div>
 
   <div class="card">
+    <h2>Find My location</h2>
+    <label class="switch" style="transform:scale(.7);transform-origin:left"><input type="checkbox" id="fmEnabled"><span class="slider"></span></label>
+    <span class="muted" id="fmState" style="margin-left:6px"></span>
+    <div style="margin:10px 0"><button class="sec" id="fmRefresh">Rescan Find My</button> <span class="muted" id="fmScan"></span></div>
+    <div id="fmFriends" class="muted"></div>
+    <label class="f">Map a texter's number to a Find My name (so their location is read out)</label>
+    <div id="fmMap"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input class="t" id="fmNum" placeholder="+15551234567" style="flex:1">
+      <input class="t" id="fmName" placeholder="Max Weitzner" style="flex:1">
+      <button class="sec" id="fmAdd">Add</button>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>Test</h2>
     <label class="f">Sample text message</label>
     <input class="t" id="testText" value="yo running 20 late start w/o me">
@@ -99,7 +114,7 @@ async function api(path, body) {
   const res = await fetch(path, opt); const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.error || ("HTTP " + res.status)); return json;
 }
-const CHECKS = [["ollama","Ollama running"],["model","Model pulled"],["kokoro","Human voice (Kokoro)"],["blackhole","BlackHole audio"],["messages","Messages access"]];
+const CHECKS = [["ollama","Ollama running"],["model","Model pulled"],["kokoro","Human voice (Kokoro)"],["blackhole","BlackHole audio"],["messages","Messages access"],["findMy","Find My"]];
 let dirty = false;
 function fill(s) {
   if (dirty) return;
@@ -116,7 +131,7 @@ async function refresh() {
     $("checks").innerHTML = CHECKS.map(([k,label]) => `<span class="chk ${d.readiness[k]?"ok":"bad"}">${d.readiness[k]?"✓":"✗"} ${label}</span>`).join("");
     const miss = CHECKS.filter(([k]) => !d.readiness[k]).map(([,l]) => l);
     $("checksHint").textContent = miss.length ? ("Fix before turning on: " + miss.join(", ")) : "All systems go.";
-    fill(d.settings);
+    fill(d.settings); renderFm(d);
     $("activity").innerHTML = d.activity.length ? d.activity.map((a) => `<div class="row"><span>${new Date(a.at).toLocaleTimeString()} &middot; <b>${esc(a.sender)}</b>: ${esc((a.text||"").slice(0,44))}${a.script?`<br><span class="muted">said: ${esc(a.script.slice(0,80))}</span>`:""}</span><span class="o ${a.outcome}">${a.outcome}${a.detail?`<br><span class="muted">${esc(a.detail)}</span>`:""}</span></div>`).join("") : '<div class="muted">Nothing yet.</div>';
   } catch (e) { $("stateDetail").textContent = "Cannot reach the desk server: " + e.message; }
 }

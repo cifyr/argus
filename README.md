@@ -56,7 +56,12 @@ Only texts that arrive **after** you turn it on trigger a call. There is an hour
 
 ### Sharing a texter's location
 
-Apple encrypts the Find My cache, so a texter's location can only be known if they share it through the companion app (`npm run web`, or the iOS app under `ios/`). When they have, the Desk looks it up by their number and the call includes where they are.
+Two sources, in order:
+
+1. **Find My.** If the texter shares their location with you in Find My, the Desk reads it straight from the Find My app. Apple encrypts the on-disk cache, so this works by automating the app via Accessibility: it pairs each friend's map pin to the nearest place label (e.g. "Washington University Field House"). It needs a one-time permission grant for the reader script, and you map a texter's number to their Find My name in the control panel. Scans are cached (~30s per scan, refreshed a few times an hour).
+2. **Companion app.** If they instead share through the location app (`npm run web`, or the iOS app under `ios/`), the Desk looks that up by their number.
+
+Either way, the call includes where they are.
 
 ---
 
