@@ -44,10 +44,12 @@
 <main>
   <div class="tabs">
     <div class="tab active" data-t="help">Help requests</div>
+    <div class="tab" data-t="feed">Live feed</div>
     <div class="tab" data-t="people">People</div>
     <div class="tab" data-t="dispatch">Dispatch numbers</div>
   </div>
   <div id="view-help"></div>
+  <div id="view-feed" hidden></div>
   <div id="view-people" hidden></div>
   <div id="view-dispatch" hidden></div>
 </main>
@@ -66,7 +68,7 @@ let tab = "help";
 document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   tab = t.dataset.t;
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
-  ["help","people","dispatch"].forEach(v => $("view-"+v).hidden = v !== tab);
+  ["help","feed","people","dispatch"].forEach(v => $("view-"+v).hidden = v !== tab);
   render();
 });
 
@@ -170,7 +172,13 @@ async function renderDispatch() {
   $("view-dispatch").querySelectorAll(".ddel").forEach(a => a.onclick = (e) => { e.preventDefault(); api("/api/dispatch/delete", { zip: a.dataset.zip }).then(render); });
 }
 
-function render() { if (tab==="help") renderHelp(); else if (tab==="people") renderPeople(); else renderDispatch(); }
+async function renderFeed() {
+  const d = await api("/api/feed");
+  const dir = (m) => m.direction === "in" ? '<span style="color:var(--crimson)">&#9654; in </span>' : '<span style="color:var(--ok)">&#9664; out</span>';
+  $("view-feed").innerHTML = '<div class="card"><h2>Live message feed (newest first)</h2>' +
+    (d.messages.length ? d.messages.map(m => `<div class="row"><span>${dir(m)} <b>${esc(m.name || m.phone)}</b> <span class="muted">${esc(m.phone)}</span><br>${esc(m.text)}</span><span class="muted">${new Date(m.at).toLocaleTimeString()}<br>${esc(m.kind)}</span></div>`).join("") : '<div class="empty">No messages yet. Texts you receive appear here as they arrive.</div>') + '</div>';
+}
+function render() { if (tab==="feed") renderFeed(); else if (tab==="help") renderHelp(); else if (tab==="people") renderPeople(); else renderDispatch(); }
 status(); render(); setInterval(() => { status(); render(); }, 5000);
 </script>
 </body>

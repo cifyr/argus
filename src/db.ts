@@ -71,6 +71,9 @@ export class Db {
   recentMessages(phone: string, limit = 20): Message[] {
     return this.db.prepare("SELECT * FROM messages WHERE phone = ? ORDER BY at DESC LIMIT ?").all(phone, limit) as unknown as Message[];
   }
+  recentAllMessages(limit = 80): (Message & { name: string })[] {
+    return this.db.prepare("SELECT m.*, COALESCE(p.name, '') AS name FROM messages m LEFT JOIN people p ON p.phone = m.phone ORDER BY m.at DESC LIMIT ?").all(limit) as unknown as (Message & { name: string })[];
+  }
 
   openHelpRequest(phone: string, text: string): HelpRequest {
     const r = this.db.prepare("INSERT INTO help_requests(phone, text, at) VALUES (?, ?, ?)").run(phone, text, Date.now());

@@ -51,6 +51,8 @@ export function createServer(config: Config, db: Db) {
     res.json({ ok: true });
   });
 
+  app.get("/api/feed", auth, (_req, res) => res.json({ messages: db.recentAllMessages(80) }));
+
   app.get("/api/people", auth, (_req, res) => res.json({ people: db.listPeople() }));
   app.post("/api/people/:phone", auth, (req, res) => {
     const patch: Record<string, unknown> = {};
