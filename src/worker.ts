@@ -5,6 +5,8 @@ import { hasHelpKeyword, classifyEmergency } from "./ollama.js";
 import { advanceIntake, firstQuestion } from "./intake.js";
 import { logger } from "./logger.js";
 
+const SESSION_MS = 3 * 60 * 60 * 1000; // a help session resets after 3 hours of no activity
+
 export class Worker {
   private watermark = 0;
   private timer: NodeJS.Timeout | null = null;
@@ -63,8 +65,14 @@ export class Worker {
     // for registered people, so intake answers (medications, conditions) are never misread.
     const emergency = hasHelpKeyword(text) || (person?.intake_done ? await classifyEmergency(this.config.ollamaModel, text) : false);
     if (emergency) {
+      const active = this.db.activeHelpSession(from, SESSION_MS);
+      if (active) {
+        // Already in a live help session - the message is logged to the thread; don't re-reply or re-open.
+        logger.info("worker.help_followup", { from, sessionId: active.id });
+        return;
+      }
       this.db.openHelpRequest(from, text);
-      logger.warn("worker.help_request", { from, text: text.slice(0, 80) });
+      logger.warn("worker.help_request.new_session", { from, text: text.slice(0, 80) });
       await this.reply(from, "Emergency services are being sent to your location. You can keep moving to stay safe - we can see your live location. Tell us anything else you can about what's happening.");
       return;
     }

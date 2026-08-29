@@ -87,6 +87,10 @@ export class Db {
     vals.push(id);
     this.db.prepare(`UPDATE help_requests SET ${sets.join(", ")} WHERE id = ?`).run(...vals as never[]);
   }
+  activeHelpSession(phone: string, windowMs: number): HelpRequest | null {
+    const row = this.db.prepare("SELECT * FROM help_requests WHERE phone = ? AND at > ? ORDER BY at DESC LIMIT 1").get(phone, Date.now() - windowMs) as HelpRequest | undefined;
+    return row ?? null;
+  }
   listHelpRequests(includeHandled = false): HelpRequest[] {
     const sql = includeHandled
       ? "SELECT * FROM help_requests ORDER BY at DESC LIMIT 100"
