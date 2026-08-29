@@ -29,7 +29,7 @@ registered person texts "help ..."
 - **Runs intake** automatically for any new number: one question per text, answers cleaned/extracted by a local Ollama model, stored in SQLite.
 - **Detects emergencies** — explicit help words any time; the LLM classifier only runs for already-registered people, so medical intake answers are never mistaken for emergencies.
 - **Reads Find My location** (see the Find My note) and shows it on the help request.
-- **ZIP → dispatch lookup** — an editable table of dispatch numbers you populate for the areas you cover; 911 is the fallback.
+- **ZIP → dispatch lookup (open data)** — type a ZIP and "Search open data" pulls nearby police departments and their phone numbers from **OpenStreetMap** (geocoded via Nominatim, stations via the Overpass API), nearest first. "Use" saves one for reuse; 911 is the fallback.
 - **Operator console** at `http://localhost:4200`: Help requests, People (registry), and Dispatch numbers.
 
 ## Requirements
@@ -52,7 +52,7 @@ npm run dev              # starts the worker + console at http://localhost:4200
 
 ## Find My location
 
-Apple encrypts the Find My cache, so the app reads location by automating the Find My app via Accessibility — it pairs each sharing friend's map pin to the nearest place label (e.g. "Washington University Field House"). It needs a one-time permission grant for `scripts/findmy.applescript` (a scoped rule in `.claude/settings.local.json` when driven here). In the console's **People** tab, set each person's **Find My name** so their location shows on their help request. If they don't share location, you can still read it in Find My yourself and type the ZIP.
+Apple encrypts the Find My cache, so the app reads location by automating the Find My app via Accessibility — it pairs each sharing friend's map pin to the nearest few map landmarks (e.g. "Graham Memorial Chapel; Department of Music; Knight Center"). For an exact street address, read the person's card in Find My directly - the app draws it and does not expose it to automation. It needs a one-time permission grant for `scripts/findmy.applescript` (a scoped rule in `.claude/settings.local.json` when driven here). In the console's **People** tab, set each person's **Find My name** so their location shows on their help request. If they don't share location, you can still read it in Find My yourself and type the ZIP.
 
 ## Data
 
@@ -60,7 +60,7 @@ SQLite (`guardian.sqlite`, gitignored):
 - `people` — registry + intake state
 - `messages` — inbound/outbound log per person
 - `help_requests` — open/handled emergencies with the ZIP + dispatch number you used
-- `dispatch` — ZIP → agency/number (editable in the console)
+- `dispatch` — ZIP → agency/number (saved from open-data lookups or edited by hand)
 
 ## Note
 

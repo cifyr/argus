@@ -6,6 +6,7 @@ import type { Db } from "./db.js";
 import { sendSms, chatDbReadable } from "./sms.js";
 import { ollamaReady } from "./ollama.js";
 import { findMyReady, findMyFriends, findMyLastScan, refreshFindMy, locationForName } from "./findmy.js";
+import { dispatchNearZip } from "./dispatch.js";
 import { logger } from "./logger.js";
 
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
@@ -57,10 +58,16 @@ export function createServer(config: Config, db: Db) {
     res.json({ person: db.updatePerson(String(req.params.phone), patch as never) });
   });
 
-  app.get("/api/dispatch", auth, (req, res) => {
+  app.get("/api/dispatch", auth, async (req, res) => {
     const zip = String(req.query.zip ?? "").trim();
-    if (zip) res.json({ match: db.getDispatch(zip), all: db.listDispatch() });
-    else res.json({ all: db.listDispatch() });
+    if (!zip) { res.json({ all: db.listDispatch() }); return; }
+    const saved = db.getDispatch(zip);
+    let live: Awaited<ReturnType<typeof dispatchNearZip>> = null;
+    if (req.query.live === "1") {
+      try { live = await dispatchNearZip(zip); }
+      catch (err) { logger.warn("server.dispatch_live_failed", { zip, err: (err as Error).message }); }
+    }
+    res.json({ match: saved, live, all: db.listDispatch() });
   });
   app.post("/api/dispatch", auth, (req, res) => {
     const { zip, agency, phone, notes } = req.body ?? {};

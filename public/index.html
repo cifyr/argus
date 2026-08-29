@@ -98,11 +98,13 @@ async function renderHelp() {
       ${profileHtml(p)}
       <div style="margin:6px 0">${loc} &middot; <a href="#" class="rescan">rescan Find My</a></div>
       <div class="zipbar">
-        <span class="muted">Look up dispatch by ZIP:</span>
+        <span class="muted">Dispatch by ZIP:</span>
         <input class="zip" placeholder="63130" value="${esc(r.zip||'')}" size="6">
-        <button class="sec zlook">Search</button>
+        <button class="sec zlook">Search saved</button>
+        <button class="zlive">Search open data</button>
         <span class="dispatch-hit result"></span>
       </div>
+      <div class="cands"></div>
       <div class="zipbar">
         <input class="dnum" placeholder="dispatch number" value="${esc(r.dispatch_number||'')}">
         <input class="lnote" placeholder="location note (typed from Find My)" value="${esc(r.location_note||'')}" style="flex:1">
@@ -114,13 +116,29 @@ async function renderHelp() {
 
   el.querySelectorAll(".req").forEach(node => {
     const id = node.dataset.id;
+    const showCands = (list, zip) => {
+      const box = node.querySelector(".cands");
+      if (!list || !list.length) { box.innerHTML = '<div class="muted">No police numbers found in open data near ' + esc(zip) + '. Call 911.</div>'; return; }
+      box.innerHTML = list.map(c => `<div class="row"><span><b>${esc(c.agency)}</b> &middot; <b>${esc(c.phone)}</b> <span class="muted">${esc(c.address||'')} &middot; ${c.distanceKm.toFixed(1)} km &middot; ${esc(c.source)}</span></span><button class="usec sec" data-ph="${esc(c.phone)}" data-ag="${esc(c.agency)}">use</button></div>`).join("");
+      box.querySelectorAll(".usec").forEach(b => b.onclick = async () => {
+        node.querySelector(".dnum").value = b.dataset.ph;
+        await api("/api/dispatch", { zip, agency: b.dataset.ag, phone: b.dataset.ph }).catch(()=>{});
+      });
+    };
     node.querySelector(".zlook").onclick = async () => {
       const zip = node.querySelector(".zip").value.trim();
       const res = node.querySelector(".result");
       try { const d = await api("/api/dispatch?zip=" + encodeURIComponent(zip));
         if (d.match) { res.innerHTML = esc(d.match.phone) + ' <span class="muted">' + esc(d.match.agency) + '</span>'; node.querySelector(".dnum").value = d.match.phone; }
-        else res.innerHTML = '<span class="muted">no entry for ' + esc(zip) + ' - add it in Dispatch numbers, or call 911</span>';
+        else res.innerHTML = '<span class="muted">no saved entry - try Search open data</span>';
       } catch(e){ res.textContent = e.message; }
+    };
+    node.querySelector(".zlive").onclick = async (e) => {
+      const zip = node.querySelector(".zip").value.trim(); if (!zip) return;
+      e.target.textContent = "searching..."; e.target.disabled = true;
+      try { const d = await api("/api/dispatch?live=1&zip=" + encodeURIComponent(zip)); showCands(d.live?.candidates, zip); }
+      catch(err){ node.querySelector(".result").textContent = err.message; }
+      finally { e.target.textContent = "Search open data"; e.target.disabled = false; }
     };
     node.querySelector(".save").onclick = () => api("/api/help/" + id, { zip: node.querySelector(".zip").value.trim(), dispatch_number: node.querySelector(".dnum").value.trim(), location_note: node.querySelector(".lnote").value.trim() }).then(render);
     const doneBtn = node.querySelector(".done");
@@ -153,7 +171,7 @@ async function renderDispatch() {
 }
 
 function render() { if (tab==="help") renderHelp(); else if (tab==="people") renderPeople(); else renderDispatch(); }
-status(); render(); setInterval(() => { status(); if (tab==="help") renderHelp(); }, 5000);
+status(); render(); setInterval(() => { status(); render(); }, 5000);
 </script>
 </body>
 </html>

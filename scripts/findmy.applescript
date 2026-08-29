@@ -1,5 +1,5 @@
--- Dump every Find My friend and their approximate location (nearest map POI to each pin), one pass.
--- Output: tab-separated "Name<TAB>Place" lines.
+-- Dump every Find My friend and their nearest map landmarks (up to 3), one pass.
+-- Output: tab-separated "Name<TAB>Place1; Place2; Place3" lines.
 tell application "FindMy" to activate
 delay 0.8
 tell application "System Events" to tell process "FindMy"
@@ -18,7 +18,10 @@ tell application "System Events" to tell process "FindMy"
           set nm to text 1 thru ((offset of ",Map pin" in d) - 1) of d
           set end of people to {nm, position of e}
         else if d is not "Compass" and d does not contain "Zoom" and d does not contain "Heading" and d is not "My Location" and d is not "group" and d is not "image" then
-          set end of pois to {d, position of e}
+          set p2 to position of e
+          set nm2 to d
+          if nm2 contains ", " then set nm2 to text 1 thru ((offset of ", " in nm2) - 1) of nm2
+          set end of pois to {nm2, p2}
         end if
       end if
     end try
@@ -26,20 +29,40 @@ tell application "System Events" to tell process "FindMy"
   set outText to ""
   repeat with pers in people
     set pinPos to item 2 of pers
-    set bestD to ""
-    set bestDist to 1.0E+12
+    -- compute distances
+    set dists to {}
     repeat with poi in pois
       set pp to item 2 of poi
       set dx to ((item 1 of pp) - (item 1 of pinPos))
       set dy to ((item 2 of pp) - (item 2 of pinPos))
-      set dist to (dx * dx + dy * dy)
-      if dist < bestDist then
-        set bestDist to dist
-        set bestD to item 1 of poi
+      set end of dists to {(dx * dx + dy * dy), item 1 of poi}
+    end repeat
+    -- pick nearest 3 (linear min, mark used)
+    set chosen to {}
+    repeat 3 times
+      set bestI to 0
+      set bestV to 1.0E+15
+      repeat with i from 1 to count of dists
+        set dd to item 1 of (item i of dists)
+        if dd < bestV then
+          set bestV to dd
+          set bestI to i
+        end if
+      end repeat
+      if bestI > 0 then
+        set end of chosen to item 2 of (item bestI of dists)
+        set item 1 of (item bestI of dists) to 1.0E+16
       end if
     end repeat
-    if bestD contains ", " then set bestD to text 1 thru ((offset of ", " in bestD) - 1) of bestD
-    set outText to outText & (item 1 of pers) & tab & bestD & linefeed
+    set joined to ""
+    repeat with c in chosen
+      if joined is "" then
+        set joined to (c as text)
+      else
+        set joined to joined & "; " & (c as text)
+      end if
+    end repeat
+    set outText to outText & (item 1 of pers) & tab & joined & linefeed
   end repeat
   return outText
 end tell
