@@ -1,4 +1,5 @@
 import "dotenv/config";
+import path from "node:path";
 
 export interface Config {
   port: number;
@@ -15,7 +16,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     port: Number(env.PORT) || 4200,
     serviceName: env.SERVICE_NAME?.trim() || "Guardian",
     ollamaModel: env.OLLAMA_MODEL?.trim() || "llama3.2:3b",
-    dbPath: env.DB_PATH?.trim() || "guardian.sqlite",
+    dbPath: path.resolve(env.DB_PATH?.trim() || "guardian.sqlite"),
     pollMs: Number(env.POLL_MS) || 4000,
     autoReply: env.AUTO_REPLY !== "false",
     operatorToken: env.OPERATOR_TOKEN?.trim() || "",

@@ -35,7 +35,9 @@ export class Db {
   constructor(path: string) {
     this.db = new DatabaseSync(path);
     this.db.exec("PRAGMA journal_mode = WAL");
-    this.db.exec(SCHEMA);
+    // node:sqlite's exec() mis-handles a multi-statement script that creates an index on a table
+    // defined earlier in the same call, so run each statement on its own.
+    for (const stmt of SCHEMA.split(";").map((x) => x.trim()).filter(Boolean)) this.db.exec(stmt);
     logger.info("db.open", { path });
   }
   close() { this.db.close(); }
