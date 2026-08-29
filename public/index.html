@@ -35,6 +35,13 @@
   h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0; padding:12px 16px; border-bottom:1px solid var(--line); }
   a { color:var(--crimson); }
   .empty { padding:20px; color:var(--muted); }
+  .thread { display:flex; flex-direction:column; gap:5px; margin:10px 0; max-height:260px; overflow-y:auto; padding:6px; background:#fafafa; border:1px solid var(--line); }
+  .bub { max-width:78%; padding:7px 11px; border-radius:12px; font-size:13px; line-height:1.35; }
+  .bub.in { align-self:flex-start; background:#fdeaec; }
+  .bub.out { align-self:flex-end; background:#e6f4ea; }
+  .bub .bt { display:block; font-size:10px; color:var(--muted); margin-top:3px; }
+  .sendbar { display:flex; gap:8px; margin:8px 0; }
+  .sendbar input { flex:1; }
 </style>
 </head>
 <body>
@@ -97,6 +104,8 @@ function renderCands(node, list, zip) {
   box.querySelectorAll(".usec").forEach(b => b.onclick = async () => { node.querySelector(".dnum").value = b.dataset.ph; await api("/api/dispatch", { zip, agency: b.dataset.ag, phone: b.dataset.ph }).catch(()=>{}); });
 }
 async function renderHelp() {
+  const ae = document.activeElement;
+  if (ae && (ae.classList.contains("opmsg") || ae.classList.contains("zip") || ae.classList.contains("dnum") || ae.classList.contains("lnote") || ae.classList.contains("fmname"))) return; // don't interrupt typing
   const d = await api("/api/help");
   const el = $("view-help");
   if (!d.requests.length) { el.innerHTML = '<div class="card"><div class="empty">No help requests. When a registered person texts for help, it appears here.</div></div>'; return; }
@@ -108,6 +117,8 @@ async function renderHelp() {
       <h3>${esc(p?.name || r.phone)} <span class="muted">${esc(r.phone)} &middot; ${new Date(r.at).toLocaleTimeString()}</span></h3>
       <div class="msg">${esc(r.text)}</div>
       ${profileHtml(p)}
+      <div class="thread">${((r.messages||[]).slice().reverse()).map(m => `<div class="bub ${m.direction}">${esc(m.text)}<span class="bt">${m.direction==='in'?'them':(m.kind==='operator'?'you':'auto')} · ${new Date(m.at).toLocaleTimeString()}</span></div>`).join("") || '<div class="muted" style="padding:6px">No messages yet.</div>'}</div>
+      <div class="sendbar"><input class="opmsg" placeholder="Message ${esc(p?.name || r.phone)}…"><button class="opsend">Send</button></div>
       <div style="margin:6px 0">${loc} &middot; <a href="#" class="rescan">rescan Find My</a></div>
       <div class="zipbar"><span class="muted">Find My name:</span>
         <input class="fmname" list="fmfriends" placeholder="e.g. Lysander Elgar" value="${esc(p?.findmy_name||'')}" size="18">
@@ -170,6 +181,13 @@ async function renderHelp() {
     const doneBtn = node.querySelector(".done");
     if (doneBtn) doneBtn.onclick = () => api("/api/help/" + id, { status: "handled", zip: node.querySelector(".zip").value.trim(), dispatch_number: node.querySelector(".dnum").value.trim(), location_note: node.querySelector(".lnote").value.trim() }).then(render);
     node.querySelector(".rescan").onclick = async (e) => { e.preventDefault(); e.target.textContent="scanning..."; await api("/api/findmy/refresh").catch(()=>{}); render(); };
+    node.querySelector(".opsend").onclick = async () => {
+      const inp = node.querySelector(".opmsg"); const t = inp.value.trim(); if (!t) return;
+      const btn = node.querySelector(".opsend"); btn.disabled = true; btn.textContent = "…";
+      try { await api("/api/send", { to: node.dataset.phone, text: t }); inp.value = ""; render(); }
+      catch (e) { alert("Send failed: " + e.message); }
+      finally { btn.disabled = false; btn.textContent = "Send"; }
+    };
     node.querySelector(".fmset").onclick = async () => {
       const phone = node.dataset.phone;
       await api("/api/people/" + encodeURIComponent(phone), { findmy_name: node.querySelector(".fmname").value.trim() });

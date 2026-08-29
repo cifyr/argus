@@ -40,7 +40,7 @@ export function createServer(config: Config, db: Db) {
       const person = db.getPerson(r.phone);
       const fmLoc = person ? locationForName(person.findmy_name || person.name) : null;
       const address = fmLoc ? await addressForLandmarks(fmLoc) : null;
-      return { ...r, person, findMyLocation: fmLoc, address, messages: db.recentMessages(r.phone, 8) };
+      return { ...r, person, findMyLocation: fmLoc, address, messages: db.recentMessages(r.phone, 30) };
     }));
     res.json({ requests });
   });
