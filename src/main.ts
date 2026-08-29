@@ -13,6 +13,7 @@ seedDispatch(db);
 const worker = new Worker(config, db);
 await worker.start();
 void refreshFindMy(true);
+setInterval(() => void refreshFindMy(), 90_000);
 
 const app = createServer(config, db);
 app.listen(config.port, () => logger.info("guardian.listening", {

@@ -5,7 +5,7 @@ import type { Config } from "./config.js";
 import type { Db } from "./db.js";
 import { sendSms, chatDbReadable } from "./sms.js";
 import { ollamaReady } from "./ollama.js";
-import { findMyReady, findMyFriends, findMyLastScan, refreshFindMy, locationForName } from "./findmy.js";
+import { findMyReady, findMyFriends, findMyLastScan, refreshFindMy, locationForName, matchFriendName } from "./findmy.js";
 import { dispatchNearZip } from "./dispatch.js";
 import { logger } from "./logger.js";
 
@@ -34,10 +34,11 @@ export function createServer(config: Config, db: Db) {
   });
 
   app.get("/api/help", auth, (req, res) => {
+    void refreshFindMy(); // keep the cache live while an operator is watching (respects TTL)
     const includeHandled = req.query.all === "1";
     const requests = db.listHelpRequests(includeHandled).map((r) => {
       const person = db.getPerson(r.phone);
-      const fmLoc = person?.findmy_name ? locationForName(person.findmy_name) : null;
+      const fmLoc = person ? locationForName(person.findmy_name || person.name) : null;
       return { ...r, person, findMyLocation: fmLoc, messages: db.recentMessages(r.phone, 8) };
     });
     res.json({ requests });

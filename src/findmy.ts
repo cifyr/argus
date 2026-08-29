@@ -6,7 +6,7 @@ import { logger } from "./logger.js";
 
 const execFileAsync = promisify(execFile);
 const SCRIPT = path.resolve(process.cwd(), "scripts/findmy.applescript");
-const TTL_MS = 3 * 60 * 1000;
+const TTL_MS = 60 * 1000;
 
 let cache = new Map<string, string>();
 let lastScan = 0;
@@ -40,6 +40,17 @@ export async function refreshFindMy(force = false): Promise<void> {
   if (!force && cache.size && Date.now() - lastScan < TTL_MS) return;
   scanning = scan().finally(() => { scanning = null; });
   return scanning;
+}
+
+// Return the exact Find My friend name matching a (registered) person name, or null.
+export function matchFriendName(name: string): string | null {
+  if (!name) return null;
+  const lc = name.toLowerCase().trim();
+  for (const n of cache.keys()) {
+    const nl = n.toLowerCase();
+    if (nl === lc || nl.startsWith(lc) || lc.startsWith(nl)) return n;
+  }
+  return null;
 }
 
 export function locationForName(name: string): string | null {

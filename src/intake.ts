@@ -1,5 +1,6 @@
 import type { Db, Person } from "./db.js";
 import { extractField } from "./ollama.js";
+import { matchFriendName } from "./findmy.js";
 import { logger } from "./logger.js";
 
 // The intake conversation: one question per SMS. Step index maps to the field being collected.
@@ -24,7 +25,10 @@ export async function advanceIntake(db: Db, model: string, serviceName: string, 
     if (prev.field === "location") {
       // location step just needs acknowledgement; nothing to store
     } else if (prev.field === "name") {
-      db.updatePerson(person.phone, { name: answer.trim() });
+      const nm = answer.trim();
+      const friend = matchFriendName(nm);
+      db.updatePerson(person.phone, friend ? { name: nm, findmy_name: friend } : { name: nm });
+      if (friend) logger.info("intake.findmy_matched", { phone: person.phone, friend });
     } else {
       const value = await extractField(model, prev.field, answer);
       db.updatePerson(person.phone, { [prev.field]: value } as Partial<Person>);

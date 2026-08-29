@@ -17,7 +17,7 @@ tell application "System Events" to tell process "FindMy"
         if d ends with ",Map pin" then
           set nm to text 1 thru ((offset of ",Map pin" in d) - 1) of d
           set end of people to {nm, position of e}
-        else if d is not "Compass" and d does not contain "Zoom" and d does not contain "Heading" and d is not "My Location" and d is not "group" and d is not "image" then
+        else if d is not "Compass" and d is not "Add" and d is not "Edit" and d is not "Me" and d does not contain "Zoom" and d does not contain "Heading" and d is not "My Location" and d is not "group" and d is not "image" then
           set p2 to position of e
           set nm2 to d
           if nm2 contains ", " then set nm2 to text 1 thru ((offset of ", " in nm2) - 1) of nm2

@@ -41,6 +41,7 @@
 <header><div class="mark">G</div><strong id="svc">Guardian</strong> <span class="muted">dispatch console</span>
   <div class="checks" id="checks"></div>
 </header>
+<datalist id="fmfriends"></datalist>
 <main>
   <div class="tabs">
     <div class="tab active" data-t="help">Help requests</div>
@@ -78,6 +79,7 @@ async function status() {
     $("svc").textContent = d.serviceName;
     const C = [["ollama","Ollama"],["model","Model"],["messages","Messages"],["findMy","Find My"]];
     $("checks").innerHTML = C.map(([k,l]) => `<span class="chk ${d.readiness[k]?"ok":"bad"}">${d.readiness[k]?"OK":"!"} ${l}</span>`).join("");
+    if (d.findMy && d.findMy.friends) $("fmfriends").innerHTML = d.findMy.friends.map(f => `<option value="${esc(f.name)}">${esc(f.place)}</option>`).join("");
   } catch (e) { $("checks").innerHTML = `<span class="chk bad">offline: ${esc(e.message)}</span>`; }
 }
 
@@ -94,11 +96,15 @@ async function renderHelp() {
   el.innerHTML = '<div class="card">' + d.requests.map(r => {
     const p = r.person;
     const loc = r.findMyLocation ? `Find My: <span class="loc">${esc(r.findMyLocation)}</span>` : (p?.findmy_name ? `Find My name set (${esc(p.findmy_name)}) - click Rescan` : "No Find My mapping");
-    return `<div class="req ${r.status==='handled'?'handled':''}" data-id="${r.id}">
+    return `<div class="req ${r.status==='handled'?'handled':''}" data-id="${r.id}" data-phone="${esc(r.phone)}">
       <h3>${esc(p?.name || r.phone)} <span class="muted">${esc(r.phone)} &middot; ${new Date(r.at).toLocaleTimeString()}</span></h3>
       <div class="msg">${esc(r.text)}</div>
       ${profileHtml(p)}
       <div style="margin:6px 0">${loc} &middot; <a href="#" class="rescan">rescan Find My</a></div>
+      <div class="zipbar"><span class="muted">Find My name:</span>
+        <input class="fmname" list="fmfriends" placeholder="e.g. Lysander Elgar" value="${esc(p?.findmy_name||'')}" size="18">
+        <button class="sec fmset">Set &amp; locate</button>
+      </div>
       <div class="zipbar">
         <span class="muted">Dispatch by ZIP:</span>
         <input class="zip" placeholder="63130" value="${esc(r.zip||'')}" size="6">
@@ -146,6 +152,11 @@ async function renderHelp() {
     const doneBtn = node.querySelector(".done");
     if (doneBtn) doneBtn.onclick = () => api("/api/help/" + id, { status: "handled", zip: node.querySelector(".zip").value.trim(), dispatch_number: node.querySelector(".dnum").value.trim(), location_note: node.querySelector(".lnote").value.trim() }).then(render);
     node.querySelector(".rescan").onclick = async (e) => { e.preventDefault(); e.target.textContent="scanning..."; await api("/api/findmy/refresh").catch(()=>{}); render(); };
+    node.querySelector(".fmset").onclick = async () => {
+      const phone = node.dataset.phone;
+      await api("/api/people/" + encodeURIComponent(phone), { findmy_name: node.querySelector(".fmname").value.trim() });
+      render();
+    };
   });
 }
 
