@@ -12,7 +12,7 @@ A companion **phone-login web app** lets people share their location, so when th
 
 ```mermaid
 flowchart LR
-  A[Someone texts your\nGoogle Voice number] --> B[Poller reads the\nGV inbox in Chrome]
+  A[Someone texts your\nGoogle Voice number] --> B[Poller reads the<br/>GV inbox in Chrome]
   B --> C{Known sender?\nrecent location?}
   C --> D[Claude writes a\nspoken script\n(optional)]
   D --> E[macOS 'say' renders\na WAV clip]
