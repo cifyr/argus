@@ -1,12 +1,13 @@
 import { logger } from "../logger.js";
 
-export interface ScriptInput { senderLabel: string; text: string; location?: string | null }
+export interface ScriptInput { senderLabel: string; text: string; location?: string | null; details?: string | null }
 
 const SYSTEM = `You write exactly what an automated voice will say when it phones someone on behalf of a person who just sent a text message asking for help.
 
 Rules for the spoken output:
 - Open with: "This is an automated message because" then who needs help and that they need help.
 - Then relay their message faithfully in natural spoken English (expand texting shorthand, keep every fact).
+- If details about the person are provided (medical info, emergency contacts, etc.), weave in the ones relevant to an emergency.
 - If a location is provided, end by stating where they are.
 - Output ONLY the words to be spoken. No quotes, no markdown, no options, no preamble, no sign-off.`;
 
@@ -14,6 +15,7 @@ export async function generateScript(model: string, input: ScriptInput, opts: { 
   const parts = [
     `Person who needs help: ${input.senderLabel}`,
     `Their text message: ${input.text}`,
+    input.details ? `Known details about them: ${input.details}` : `Known details about them: none`,
     input.location ? `Their location: ${input.location}` : `Their location: unknown`,
     ``,
     `Spoken message:`,

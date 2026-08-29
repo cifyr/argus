@@ -3,6 +3,7 @@ import { currentMaxRowId, newInboundSince, type InboundText } from "./messages.j
 import { generateScript } from "./ollama.js";
 import { locationForSender } from "./location.js";
 import { locationForName, refreshFindMy } from "./findmy.js";
+import { getPerson, rememberDetail } from "./people.js";
 import { pickSynth } from "./tts.js";
 import { playIntoBlackhole } from "./audio.js";
 import { placeCall, confirmFaceTimeCall } from "./caller.js";
@@ -102,6 +103,13 @@ export class Worker {
 
   // Exposed so the control panel can run the full pipeline on demand (a real call).
   async handle(msg: InboundText): Promise<Activity> {
+    const kw = this.settings.infoKeywords.find((k) => new RegExp(`^\\s*${k}\\b[:,\\s-]*`, "i").test(msg.text));
+    if (kw) {
+      const detail = msg.text.replace(new RegExp(`^\\s*${kw}\\b[:,\\s-]*`, "i"), "").trim();
+      const person = rememberDetail(msg.sender, detail || msg.text);
+      const a: Activity = { at: Date.now(), sender: msg.sender, text: msg.text, outcome: "skipped", detail: `saved to profile (${person.name || msg.sender})` };
+      this.log(a); logger.info("desk.worker.profile_saved", { sender: msg.sender, name: person.name }); return a;
+    }
     if (!this.allowed(msg.sender)) {
       const a: Activity = { at: Date.now(), sender: msg.sender, text: msg.text, outcome: "skipped", detail: "sender not in allow-list" };
       this.log(a); logger.info("desk.worker.skipped", { sender: msg.sender }); return a;
@@ -117,7 +125,13 @@ export class Worker {
     logger.info("desk.worker.handle", { sender: msg.sender, textLength: msg.text.length });
     try {
       const location = await this.resolveLocation(msg.sender);
-      const script = await generateScript(this.settings.ollamaModel, { senderLabel: this.senderLabel(msg.sender), text: msg.text, location });
+      const person = getPerson(msg.sender);
+      const script = await generateScript(this.settings.ollamaModel, {
+        senderLabel: person?.name || this.senderLabel(msg.sender),
+        text: msg.text,
+        location,
+        details: person?.notes || null,
+      });
       const wav = await pickSynth(this.settings.ttsEngine)(script, this.settings.voice);
       this.callTimes.push(Date.now());
       await placeCall(this.settings.callNumber);

@@ -7,6 +7,7 @@ import { kokoroReady, pickSynth } from "./tts.js";
 import { blackholePresent, playAudible } from "./audio.js";
 import { chatDbReadable } from "./messages.js";
 import { findMyReady, findMyFriends, findMyLastScan, refreshFindMy } from "./findmy.js";
+import { listPeople, upsertPerson, deletePerson } from "./people.js";
 import { generateScript } from "./ollama.js";
 import { logger } from "../logger.js";
 
@@ -32,6 +33,7 @@ export function createDeskApp(worker: Worker) {
         findMy: findMyReady(),
       },
       findMy: { friends: findMyFriends(), lastScan: findMyLastScan(), enabled: s.findMyEnabled },
+      people: listPeople(),
       activity: worker.activity,
     });
   });
@@ -76,6 +78,17 @@ export function createDeskApp(worker: Worker) {
     if (!text) { res.status(400).json({ error: "text required" }); return; }
     const a = await worker.handle({ rowid: -1, sender, text, service: "test" });
     res.status(a.outcome === "error" ? 500 : 200).json({ activity: a });
+  });
+
+  app.post("/api/people", (req, res) => {
+    const phone = String(req.body?.phone ?? "").trim();
+    if (!phone) { res.status(400).json({ error: "phone required" }); return; }
+    const person = upsertPerson(phone, { name: String(req.body?.name ?? ""), notes: String(req.body?.notes ?? "") });
+    res.json({ ok: true, person });
+  });
+  app.post("/api/people/delete", (req, res) => {
+    deletePerson(String(req.body?.phone ?? ""));
+    res.json({ ok: true });
   });
 
   app.post("/api/findmy/refresh", async (_req, res) => {

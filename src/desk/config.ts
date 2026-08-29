@@ -16,6 +16,7 @@ export interface DeskSettings {
   repeat: number;              // times to speak the message
   findMyEnabled: boolean;
   senderNames: Record<string, string>;  // phone (last 10 digits ok) -> Find My friend name
+  infoKeywords: string[];  // a text starting with one of these updates the sender's profile instead of calling
 }
 
 const FILE = path.resolve(process.cwd(), "desk-config.json");
@@ -34,6 +35,7 @@ const DEFAULTS: DeskSettings = {
   repeat: 2,
   findMyEnabled: true,
   senderNames: {},
+  infoKeywords: ["info", "profile", "remember", "about me", "my info"],
 };
 
 export function loadSettings(): DeskSettings {

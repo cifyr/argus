@@ -91,6 +91,18 @@
   </div>
 
   <div class="card">
+    <h2>People</h2>
+    <div class="muted" style="margin-bottom:8px">Saved profiles used to identify texters and add context to the call. People can also text their own details, e.g. <b>info: my name is Max, I'm diabetic, contact mom 555-1234</b> - that saves instead of calling.</div>
+    <div id="people"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <input class="t" id="pPhone" placeholder="+15551234567">
+      <input class="t" id="pName" placeholder="Name">
+    </div>
+    <textarea class="t" id="pNotes" placeholder="Notes: medical info, emergency contacts, anything the call should know" style="margin-top:8px;min-height:60px;font-family:inherit"></textarea>
+    <div style="margin-top:8px"><button class="sec" id="pSave">Save person</button></div>
+  </div>
+
+  <div class="card">
     <h2>Test</h2>
     <label class="f">Sample text message</label>
     <input class="t" id="testText" value="yo running 20 late start w/o me">
@@ -131,7 +143,7 @@ async function refresh() {
     $("checks").innerHTML = CHECKS.map(([k,label]) => `<span class="chk ${d.readiness[k]?"ok":"bad"}">${d.readiness[k]?"✓":"✗"} ${label}</span>`).join("");
     const miss = CHECKS.filter(([k]) => !d.readiness[k]).map(([,l]) => l);
     $("checksHint").textContent = miss.length ? ("Fix before turning on: " + miss.join(", ")) : "All systems go.";
-    fill(d.settings); renderFm(d);
+    fill(d.settings); renderFm(d); renderPeople(d);
     $("activity").innerHTML = d.activity.length ? d.activity.map((a) => `<div class="row"><span>${new Date(a.at).toLocaleTimeString()} &middot; <b>${esc(a.sender)}</b>: ${esc((a.text||"").slice(0,44))}${a.script?`<br><span class="muted">said: ${esc(a.script.slice(0,80))}</span>`:""}</span><span class="o ${a.outcome}">${a.outcome}${a.detail?`<br><span class="muted">${esc(a.detail)}</span>`:""}</span></div>`).join("") : '<div class="muted">Nothing yet.</div>';
   } catch (e) { $("stateDetail").textContent = "Cannot reach the desk server: " + e.message; }
 }
