@@ -4,18 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --import tsx --test test/*.test.ts",
     "dev": "tsx src/main.ts",
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit",
-    "login": "tsx scripts/login.ts",
-    "gv:inspect": "tsx scripts/gv-inspect.ts",
-    "test:call": "tsx scripts/test-call.ts",
-    "test:sms": "tsx scripts/test-sms.ts",
-    "tunnel": "ngrok http 3000",
-    "web": "tsx src/web-only.ts",
-    "gv:dryrun": "tsx scripts/gv-dryrun.ts",
-    "desk": "tsx src/desk/main.ts"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

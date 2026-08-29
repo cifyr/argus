@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { logger } from "../logger.js";
+import { logger } from "./logger.js";
 
 const execFileAsync = promisify(execFile);
 const SCRIPT = path.resolve(process.cwd(), "scripts/findmy.applescript");
@@ -21,22 +21,20 @@ export function findMyFriends(): { name: string; place: string }[] {
 async function scan(): Promise<void> {
   if (!existsSync(SCRIPT)) return;
   const started = Date.now();
-  logger.info("desk.findmy.scan.start");
   try {
-    const { stdout } = await execFileAsync("osascript", [SCRIPT], { timeout: 90_000, maxBuffer: 4 * 1024 * 1024 });
+    const { stdout } = await execFileAsync("osascript", [SCRIPT], { timeout: 90000, maxBuffer: 4 * 1024 * 1024 });
     const map = new Map<string, string>();
     for (const line of stdout.split("\n")) {
       const [name, place] = line.split("\t");
       if (name?.trim() && place?.trim() && !map.has(name.trim())) map.set(name.trim(), place.trim());
     }
     if (map.size) { cache = map; lastScan = Date.now(); }
-    logger.info("desk.findmy.scan.done", { ms: Date.now() - started, friends: map.size });
+    logger.info("findmy.scan.done", { ms: Date.now() - started, friends: map.size });
   } catch (err) {
-    logger.error("desk.findmy.scan.failed", { err });
+    logger.error("findmy.scan.failed", { err });
   }
 }
 
-// Refreshes the cache in the background (a scan takes ~30-40s); returns immediately if fresh.
 export async function refreshFindMy(force = false): Promise<void> {
   if (scanning) return scanning;
   if (!force && cache.size && Date.now() - lastScan < TTL_MS) return;
@@ -45,6 +43,7 @@ export async function refreshFindMy(force = false): Promise<void> {
 }
 
 export function locationForName(name: string): string | null {
+  if (!name) return null;
   const exact = cache.get(name);
   if (exact) return exact;
   const lc = name.toLowerCase();

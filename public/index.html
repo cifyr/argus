@@ -2,134 +2,158 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#B11226">
-<link rel="manifest" href="/manifest.json">
-<title>Relay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardian Console</title>
 <style>
-  :root { --crimson:#B11226; --ember:#E2401B; --ink:#171717; --muted:#6B6B6B; --line:#E6E3E1; }
+  :root { --crimson:#B11226; --ember:#E2401B; --ink:#171717; --muted:#6B6B6B; --line:#E6E3E1; --ok:#1a7f37; --paper:#faf9f8; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; color:var(--ink); background:#fff; }
-  header { display:flex; align-items:center; gap:12px; padding:20px; border-bottom:1px solid var(--line); }
-  .mark { width:36px; height:36px; background:var(--crimson); color:#fff; font-weight:700; display:grid; place-items:center; font-size:20px; }
-  main { max-width:480px; margin:0 auto; padding:24px 20px; }
-  h1 { font-size:22px; margin:0 0 6px; }
-  p { color:var(--muted); line-height:1.45; margin:0 0 18px; }
-  label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
-  input { width:100%; font-size:18px; padding:12px; border:1px solid var(--line); border-bottom:2px solid var(--ink); border-radius:0; }
-  button { width:100%; margin-top:14px; padding:14px; font-size:16px; font-weight:600; color:#fff; background:var(--crimson); border:0; cursor:pointer; }
-  button.secondary { background:#fff; color:var(--ink); border:1px solid var(--line); }
-  .error { color:var(--ember); font-weight:600; margin-top:12px; }
-  .status { border-left:4px solid var(--crimson); background:#F4E6E7; padding:14px; margin:18px 0; }
-  .kpi { font-size:28px; font-weight:700; }
-  .row { display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom:1px solid var(--line); }
-  .row span:last-child { font-weight:600; }
+  body { margin:0; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; color:var(--ink); background:var(--paper); }
+  header { display:flex; align-items:center; gap:12px; padding:14px 22px; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+  .mark { width:32px; height:32px; background:var(--crimson); color:#fff; font-weight:700; display:grid; place-items:center; }
+  .checks { margin-left:auto; display:flex; gap:6px; }
+  .chk { font-size:11px; padding:3px 8px; border:1px solid var(--line); }
+  .chk.ok { color:var(--ok); border-color:var(--ok); } .chk.bad { color:var(--crimson); border-color:var(--crimson); }
+  main { max-width:1100px; margin:0 auto; padding:20px; display:grid; grid-template-columns:1fr; gap:16px; }
+  .tabs { display:flex; gap:6px; }
+  .tab { padding:8px 14px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:600; font-size:14px; }
+  .tab.active { background:var(--ink); color:#fff; }
+  .card { background:#fff; border:1px solid var(--line); padding:0; }
+  .req { border-left:5px solid var(--crimson); padding:16px 18px; border-bottom:1px solid var(--line); }
+  .req.handled { border-left-color:var(--muted); opacity:.6; }
+  .req h3 { margin:0 0 4px; font-size:18px; }
+  .msg { background:#fdeaec; border:1px solid #f3c9cf; padding:10px 12px; margin:8px 0; font-size:15px; }
+  .profile { display:grid; grid-template-columns:repeat(2,1fr); gap:4px 18px; font-size:13px; margin:8px 0; }
+  .profile div span { color:var(--muted); }
+  .loc { font-weight:600; }
+  .zipbar { display:flex; gap:8px; align-items:center; margin:10px 0; flex-wrap:wrap; }
+  input, textarea { font-size:14px; padding:8px; border:1px solid var(--line); border-bottom:2px solid var(--ink); font-family:inherit; }
+  button { padding:8px 14px; font-weight:600; color:#fff; background:var(--crimson); border:0; cursor:pointer; font-size:13px; }
+  button.sec { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .dispatch-hit { font-size:20px; font-weight:700; color:var(--ink); }
+  .row { display:flex; justify-content:space-between; padding:8px 14px; border-bottom:1px solid var(--line); font-size:14px; align-items:center; gap:8px; }
+  .muted { color:var(--muted); font-size:12px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0; padding:12px 16px; border-bottom:1px solid var(--line); }
+  a { color:var(--crimson); }
+  .empty { padding:20px; color:var(--muted); }
 </style>
 </head>
 <body>
-<header><div class="mark">R</div><div><strong>Relay</strong><br><small style="color:var(--muted)">text us and we call for you</small></div></header>
+<header><div class="mark">G</div><strong id="svc">Guardian</strong> <span class="muted">dispatch console</span>
+  <div class="checks" id="checks"></div>
+</header>
 <main>
-  <section id="step-phone">
-    <h1>Sign in with your phone</h1>
-    <p>We'll text a 6-digit code to this number. Once signed in, this page shares your location so your last known position can be included when you text us.</p>
-    <label for="phone">Mobile number</label>
-    <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="555-123-4567">
-    <button id="send">Text me a code</button>
-    <div id="err-phone" class="error" hidden></div>
-  </section>
-
-  <section id="step-code" hidden>
-    <h1>Enter the code</h1>
-    <p>Sent to <strong id="sent-to"></strong>. It expires in 10 minutes.</p>
-    <label for="code">6-digit code</label>
-    <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456">
-    <button id="verify">Verify</button>
-    <button id="back" class="secondary">Use a different number</button>
-    <div id="err-code" class="error" hidden></div>
-  </section>
-
-  <section id="step-track" hidden>
-    <h1>You're signed in</h1>
-    <p>Keep this page open (or add it to your home screen) so we know where you are. Location is only shared while this page is open.</p>
-    <div class="status"><div class="kpi" id="track-state">Starting location…</div><div id="track-detail" style="color:var(--muted);font-size:13px"></div></div>
-    <div class="row"><span>Signed in as</span><span id="me"></span></div>
-    <div class="row"><span>Text us at</span><span id="relay-number">-</span></div>
-    <a id="text-link" hidden><button class="secondary">Open a text to the relay number</button></a>
-    <div class="row"><span>Last sent</span><span id="last-sent">never</span></div>
-    <div class="row"><span>Accuracy</span><span id="accuracy">-</span></div>
-    <button id="signout" class="secondary">Sign out</button>
-    <div id="err-track" class="error" hidden></div>
-  </section>
+  <div class="tabs">
+    <div class="tab active" data-t="help">Help requests</div>
+    <div class="tab" data-t="people">People</div>
+    <div class="tab" data-t="dispatch">Dispatch numbers</div>
+  </div>
+  <div id="view-help"></div>
+  <div id="view-people" hidden></div>
+  <div id="view-dispatch" hidden></div>
 </main>
 <script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
-  const show = (id) => { for (const s of ["step-phone", "step-code", "step-track"]) $(s).hidden = s !== id; };
-  const fail = (id, msg) => { $(id).textContent = msg; $(id).hidden = !msg; };
-  const api = async (path, body, token) => {
-    const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) }, body: JSON.stringify(body) });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json.error || ("HTTP " + res.status));
-    return json;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const token = new URLSearchParams(location.search).get("token") || "";
+const H = token ? { Authorization: "Bearer " + token } : {};
+async function api(path, body) {
+  const opt = { headers: { ...H } };
+  if (body) { opt.method = "POST"; opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  const r = await fetch(path, opt); const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status)); return j;
+}
+let tab = "help";
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  tab = t.dataset.t;
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
+  ["help","people","dispatch"].forEach(v => $("view-"+v).hidden = v !== tab);
+  render();
+});
+
+async function status() {
+  try {
+    const d = await api("/api/status");
+    $("svc").textContent = d.serviceName;
+    const C = [["ollama","Ollama"],["model","Model"],["messages","Messages"],["findMy","Find My"]];
+    $("checks").innerHTML = C.map(([k,l]) => `<span class="chk ${d.readiness[k]?"ok":"bad"}">${d.readiness[k]?"OK":"!"} ${l}</span>`).join("");
+  } catch (e) { $("checks").innerHTML = `<span class="chk bad">offline: ${esc(e.message)}</span>`; }
+}
+
+function profileHtml(p) {
+  if (!p) return '<div class="muted">No profile - not registered.</div>';
+  const f = (label, v) => v ? `<div><span>${label}:</span> ${esc(v)}</div>` : "";
+  return `<div class="profile">${f("Name",p.name)}${f("Medical",p.medical)}${f("Allergies",p.allergies)}${f("Medications",p.medications)}${f("Emergency contact",p.emergency_contact)}${f("Find My name",p.findmy_name)}</div>${p.notes?`<div class="muted">${esc(p.notes)}</div>`:""}`;
+}
+
+async function renderHelp() {
+  const d = await api("/api/help");
+  const el = $("view-help");
+  if (!d.requests.length) { el.innerHTML = '<div class="card"><div class="empty">No help requests. When a registered person texts for help, it appears here.</div></div>'; return; }
+  el.innerHTML = '<div class="card">' + d.requests.map(r => {
+    const p = r.person;
+    const loc = r.findMyLocation ? `Find My: <span class="loc">${esc(r.findMyLocation)}</span>` : (p?.findmy_name ? `Find My name set (${esc(p.findmy_name)}) - click Rescan` : "No Find My mapping");
+    return `<div class="req ${r.status==='handled'?'handled':''}" data-id="${r.id}">
+      <h3>${esc(p?.name || r.phone)} <span class="muted">${esc(r.phone)} &middot; ${new Date(r.at).toLocaleTimeString()}</span></h3>
+      <div class="msg">${esc(r.text)}</div>
+      ${profileHtml(p)}
+      <div style="margin:6px 0">${loc} &middot; <a href="#" class="rescan">rescan Find My</a></div>
+      <div class="zipbar">
+        <span class="muted">Look up dispatch by ZIP:</span>
+        <input class="zip" placeholder="63130" value="${esc(r.zip||'')}" size="6">
+        <button class="sec zlook">Search</button>
+        <span class="dispatch-hit result"></span>
+      </div>
+      <div class="zipbar">
+        <input class="dnum" placeholder="dispatch number" value="${esc(r.dispatch_number||'')}">
+        <input class="lnote" placeholder="location note (typed from Find My)" value="${esc(r.location_note||'')}" style="flex:1">
+        <button class="save">Save</button>
+        ${r.status==='handled' ? '<span class="muted">handled</span>' : '<button class="done">Mark handled</button>'}
+      </div>
+    </div>`;
+  }).join("") + '</div>';
+
+  el.querySelectorAll(".req").forEach(node => {
+    const id = node.dataset.id;
+    node.querySelector(".zlook").onclick = async () => {
+      const zip = node.querySelector(".zip").value.trim();
+      const res = node.querySelector(".result");
+      try { const d = await api("/api/dispatch?zip=" + encodeURIComponent(zip));
+        if (d.match) { res.innerHTML = esc(d.match.phone) + ' <span class="muted">' + esc(d.match.agency) + '</span>'; node.querySelector(".dnum").value = d.match.phone; }
+        else res.innerHTML = '<span class="muted">no entry for ' + esc(zip) + ' - add it in Dispatch numbers, or call 911</span>';
+      } catch(e){ res.textContent = e.message; }
+    };
+    node.querySelector(".save").onclick = () => api("/api/help/" + id, { zip: node.querySelector(".zip").value.trim(), dispatch_number: node.querySelector(".dnum").value.trim(), location_note: node.querySelector(".lnote").value.trim() }).then(render);
+    const doneBtn = node.querySelector(".done");
+    if (doneBtn) doneBtn.onclick = () => api("/api/help/" + id, { status: "handled", zip: node.querySelector(".zip").value.trim(), dispatch_number: node.querySelector(".dnum").value.trim(), location_note: node.querySelector(".lnote").value.trim() }).then(render);
+    node.querySelector(".rescan").onclick = async (e) => { e.preventDefault(); e.target.textContent="scanning..."; await api("/api/findmy/refresh").catch(()=>{}); render(); };
+  });
+}
+
+async function renderPeople() {
+  const d = await api("/api/people");
+  $("view-people").innerHTML = '<div class="card"><h2>Registered people (' + d.people.length + ')</h2>' +
+    (d.people.length ? d.people.map(p => `<div class="row"><span><b>${esc(p.name||"(no name)")}</b> ${esc(p.phone)} ${p.intake_done?'':'<span class="muted">intake in progress</span>'}<br><span class="muted">${esc([p.medical,p.allergies&&"allergies: "+p.allergies,p.medications].filter(Boolean).join(" · "))}</span></span>
+      <span><input class="fm" placeholder="Find My name" value="${esc(p.findmy_name||'')}" data-ph="${esc(p.phone)}" size="14"><button class="sec fmsave" data-ph="${esc(p.phone)}">set</button></span></div>`).join("") : '<div class="empty">Nobody registered yet. When a new number texts, intake starts automatically.</div>') + '</div>';
+  $("view-people").querySelectorAll(".fmsave").forEach(b => b.onclick = () => {
+    const inp = $("view-people").querySelector('.fm[data-ph="'+b.dataset.ph.replace(/"/g,'')+'"]');
+    api("/api/people/" + encodeURIComponent(b.dataset.ph), { findmy_name: inp.value.trim() }).then(render);
+  });
+}
+
+async function renderDispatch() {
+  const d = await api("/api/dispatch");
+  $("view-dispatch").innerHTML = '<div class="card"><h2>Dispatch numbers by ZIP</h2>' +
+    d.all.map(x => `<div class="row"><span><b>${esc(x.zip)}</b> ${esc(x.agency)} &middot; <b>${esc(x.phone)}</b>${x.notes?`<br><span class="muted">${esc(x.notes)}</span>`:""}</span><a href="#" class="ddel" data-zip="${esc(x.zip)}" style="color:var(--crimson)">delete</a></div>`).join("") +
+    `<div class="row"><input class="nzip" placeholder="ZIP" size="6"><input class="nag" placeholder="Agency" style="flex:1"><input class="nph" placeholder="Number" size="14"><button class="dadd">Add</button></div></div>`;
+  $("view-dispatch").querySelector(".dadd").onclick = () => {
+    const v = $("view-dispatch");
+    api("/api/dispatch", { zip: v.querySelector(".nzip").value.trim(), agency: v.querySelector(".nag").value.trim(), phone: v.querySelector(".nph").value.trim() }).then(render).catch(e=>alert(e.message));
   };
+  $("view-dispatch").querySelectorAll(".ddel").forEach(a => a.onclick = (e) => { e.preventDefault(); api("/api/dispatch/delete", { zip: a.dataset.zip }).then(render); });
+}
 
-  let phone = store.get("relay.phone");
-  let token = store.get("relay.token");
-
-  $("send").onclick = async () => {
-    fail("err-phone", "");
-    try {
-      const r = await api("/api/auth/request-code", { phone: $("phone").value });
-      phone = r.phone; $("sent-to").textContent = phone; show("step-code"); $("code").focus();
-    } catch (e) { fail("err-phone", e.message); }
-  };
-  $("back").onclick = () => show("step-phone");
-  $("verify").onclick = async () => {
-    fail("err-code", "");
-    try {
-      const r = await api("/api/auth/verify", { phone, code: $("code").value });
-      token = r.token; store.set("relay.token", token); store.set("relay.phone", r.phone);
-      startTracking();
-    } catch (e) { fail("err-code", e.message); }
-  };
-  $("signout").onclick = () => { store.set("relay.token", null); store.set("relay.phone", null); token = null; stopTracking(); show("step-phone"); };
-
-  let watchId = null, heartbeat = null, lastPos = null, lastSentAt = 0;
-  async function send(pos, reason) {
-    if (!token || !pos) return;
-    try {
-      await api("/api/location", { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }, token);
-      lastSentAt = Date.now();
-      $("last-sent").textContent = new Date().toLocaleTimeString() + " (" + reason + ")";
-      $("accuracy").textContent = Math.round(pos.coords.accuracy) + " m";
-      $("track-state").textContent = "Sharing location";
-      $("track-detail").textContent = pos.coords.latitude.toFixed(5) + ", " + pos.coords.longitude.toFixed(5);
-      fail("err-track", "");
-    } catch (e) {
-      if (/sign in/i.test(e.message)) { $("signout").onclick(); return; }
-      fail("err-track", "Could not send location: " + e.message);
-    }
-  }
-  function startTracking() {
-    show("step-track"); $("me").textContent = store.get("relay.phone") || "";
-    if (!navigator.geolocation) { $("track-state").textContent = "No location support"; return; }
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => { lastPos = pos; if (Date.now() - lastSentAt > 15000) send(pos, "moved"); },
-      (err) => { $("track-state").textContent = "Location blocked"; $("track-detail").textContent = err.message + ". Allow location for this site in your browser settings."; },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
-    );
-    heartbeat = setInterval(() => send(lastPos, "heartbeat"), 60000);
-    document.addEventListener("visibilitychange", () => { if (!document.hidden && lastPos) send(lastPos, "resumed"); });
-  }
-  function stopTracking() { if (watchId != null) navigator.geolocation.clearWatch(watchId); clearInterval(heartbeat); watchId = null; heartbeat = null; }
-
-  fetch("/api/config").then((r) => r.json()).then((c) => {
-    if (c.relayNumber) { $("relay-number").textContent = c.relayNumber; $("text-link").href = "sms:" + c.relayNumber; $("text-link").hidden = false; }
-  }).catch(() => {});
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
-  if (token) startTracking(); else show("step-phone");
-})();
+function render() { if (tab==="help") renderHelp(); else if (tab==="people") renderPeople(); else renderDispatch(); }
+status(); render(); setInterval(() => { status(); if (tab==="help") renderHelp(); }, 5000);
 </script>
 </body>
 </html>
