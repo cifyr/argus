@@ -9,6 +9,7 @@ export interface Config {
   pollMs: number;
   autoReply: boolean;        // send intake questions/acks over SMS automatically
   operatorToken: string;
+  replyAllowlist: string[];
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -20,5 +21,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     pollMs: Number(env.POLL_MS) || 4000,
     autoReply: env.AUTO_REPLY !== "false",
     operatorToken: env.OPERATOR_TOKEN?.trim() || "",
+    replyAllowlist: (env.REPLY_ALLOWLIST || "").split(",").map((x) => x.replace(/\D/g, "").slice(-10)).filter(Boolean),
   };
 }

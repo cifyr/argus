@@ -36,11 +36,20 @@ export class Worker {
     }
   }
 
+  private allowedToReply(to: string): boolean {
+    if (!this.config.autoReply) return false;
+    const list = this.config.replyAllowlist;
+    if (list.length === 0) return true; // no allow-list => reply to everyone
+    return list.includes(to.replace(/\D/g, "").slice(-10));
+  }
+
   private async reply(to: string, body: string): Promise<void> {
     this.db.addMessage(to, "out", body, "system");
-    if (this.config.autoReply) {
-      try { await sendSms(to, body); }
+    if (this.allowedToReply(to)) {
+      try { await sendSms(to, body); logger.info("worker.replied", { to }); }
       catch (err) { logger.error("worker.reply_failed", { to, err }); }
+    } else {
+      logger.info("worker.reply_suppressed", { to, reason: this.config.autoReply ? "not in allow-list" : "auto-reply off" });
     }
   }
 
