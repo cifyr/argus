@@ -64,11 +64,11 @@ export function locationForName(name: string): string | null {
 
 const UA = "Guardian911/0.1 (personal emergency tool)";
 const CHAINS = /\b(qdoba|subway|starbucks|mcdonald|chipotle|panera|chick-fil-a|dominos?|taco bell|fedex|ups store|walgreens|cvs|dunkin|wendy|burger king|7-eleven)\b/i;
-const geoCache = new Map<string, { address: string; lat: number; lon: number; mapsUrl: string } | null>();
+const geoCache = new Map<string, { address: string; zip: string; lat: number; lon: number; mapsUrl: string } | null>();
 
 // Turn a "A; B; C" landmark string into a real street address by geocoding the nearest
 // distinctive (non-chain) landmark. Cached per landmark string so polling stays fast.
-export async function addressForLandmarks(landmarks: string): Promise<{ address: string; lat: number; lon: number; mapsUrl: string } | null> {
+export async function addressForLandmarks(landmarks: string): Promise<{ address: string; zip: string; lat: number; lon: number; mapsUrl: string } | null> {
   if (!landmarks) return null;
   if (geoCache.has(landmarks)) return geoCache.get(landmarks)!;
   const parts = landmarks.split(";").map((x) => x.trim()).filter(Boolean);
@@ -89,7 +89,7 @@ export async function addressForLandmarks(landmarks: string): Promise<{ address:
         ad.city || ad.town || ad.village || ad.suburb,
         [ad.state, ad.postcode].filter(Boolean).join(" "),
       ].filter(Boolean).join(", ");
-      const result = { address, lat: Number(a.lat), lon: Number(a.lon), mapsUrl: `https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}` };
+      const result = { address, zip: ad.postcode ?? "", lat: Number(a.lat), lon: Number(a.lon), mapsUrl: `https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}` };
       geoCache.set(landmarks, result);
       logger.info("findmy.geocoded", { target, address });
       return result;

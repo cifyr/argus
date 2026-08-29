@@ -89,6 +89,13 @@ function profileHtml(p) {
   return `<div class="profile">${f("Name",p.name)}${f("Medical",p.medical)}${f("Allergies",p.allergies)}${f("Medications",p.medications)}${f("Emergency contact",p.emergency_contact)}${f("Find My name",p.findmy_name)}</div>${p.notes?`<div class="muted">${esc(p.notes)}</div>`:""}`;
 }
 
+function renderCands(node, list, zip) {
+  const box = node.querySelector(".cands");
+  if (!box) return;
+  if (!list || !list.length) { box.innerHTML = '<div class="muted">No police numbers found in open data near ' + esc(zip) + '. Call 911.</div>'; return; }
+  box.innerHTML = list.map(c => `<div class="row"><span><b>${esc(c.agency)}</b> &middot; <b>${esc(c.phone)}</b> <span class="muted">${esc(c.address||'')} &middot; ${c.distanceKm.toFixed(1)} km</span></span><button class="usec sec" data-ph="${esc(c.phone)}" data-ag="${esc(c.agency)}">use</button></div>`).join("");
+  box.querySelectorAll(".usec").forEach(b => b.onclick = async () => { node.querySelector(".dnum").value = b.dataset.ph; await api("/api/dispatch", { zip, agency: b.dataset.ag, phone: b.dataset.ph }).catch(()=>{}); });
+}
 async function renderHelp() {
   const d = await api("/api/help");
   const el = $("view-help");
@@ -108,7 +115,7 @@ async function renderHelp() {
       </div>
       <div class="zipbar">
         <span class="muted">Dispatch by ZIP:</span>
-        <input class="zip" placeholder="63130" value="${esc(r.zip||'')}" size="6">
+        <input class="zip" placeholder="63130" value="${esc(r.zip || (r.address && r.address.zip) || '')}" size="6">
         <button class="sec zlook">Search saved</button>
         <button class="zlive">Search open data</button>
         <span class="dispatch-hit result"></span>
@@ -125,6 +132,16 @@ async function renderHelp() {
 
   el.querySelectorAll(".req").forEach(node => {
     const id = node.dataset.id;
+    // auto-load open-data dispatch numbers when a ZIP is known (once per request, cached)
+    const zipVal = node.querySelector(".zip").value.trim();
+    window.__disp = window.__disp || {};
+    if (zipVal) {
+      if (window.__disp[id]) { renderCands(node, window.__disp[id], zipVal); }
+      else if (window.__disp[id] !== null) {
+        window.__disp[id] = null; // in-flight guard
+        api("/api/dispatch?live=1&zip=" + encodeURIComponent(zipVal)).then(d => { window.__disp[id] = (d.live && d.live.candidates) || []; renderCands(node, window.__disp[id], zipVal); }).catch(()=>{ window.__disp[id] = undefined; });
+      }
+    }
     const showCands = (list, zip) => {
       const box = node.querySelector(".cands");
       if (!list || !list.length) { box.innerHTML = '<div class="muted">No police numbers found in open data near ' + esc(zip) + '. Call 911.</div>'; return; }
@@ -145,7 +162,7 @@ async function renderHelp() {
     node.querySelector(".zlive").onclick = async (e) => {
       const zip = node.querySelector(".zip").value.trim(); if (!zip) return;
       e.target.textContent = "searching..."; e.target.disabled = true;
-      try { const d = await api("/api/dispatch?live=1&zip=" + encodeURIComponent(zip)); showCands(d.live?.candidates, zip); }
+      try { const d = await api("/api/dispatch?live=1&zip=" + encodeURIComponent(zip)); window.__disp[id] = (d.live && d.live.candidates) || []; renderCands(node, window.__disp[id], zip); }
       catch(err){ node.querySelector(".result").textContent = err.message; }
       finally { e.target.textContent = "Search open data"; e.target.disabled = false; }
     };
