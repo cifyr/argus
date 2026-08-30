@@ -1,13 +1,13 @@
-# Argus — 911 intake & dispatch console
+# Argus - 911 intake & dispatch console
 
 Argus is a **local Mac tool** that helps a responder team (the **argus-team**) relay emergencies for the people they look after (each a **victim**).
 
 > **Terminology:** the **victim** is the person who registers and later texts for help. The **argus-team** is whoever runs this console and receives the victim's messages.
 
 1. **People register by texting** your number. A local AI (Ollama) asks for their medical details over SMS and asks them to share their location in **Find My**.
-2. **Later, when they text for help**, an argus-team console shows their message, their medical profile, and their live location — turned into a real street address — plus the **dispatch phone number** for that area, pulled from open data. You call and relay it.
+2. **Later, when they text for help**, an argus-team console shows their message, their medical profile, and their live location - turned into a real street address - plus the **dispatch phone number** for that area, pulled from open data. You call and relay it.
 
-Everything runs on your Mac. No cloud, no accounts, no telephony fees. Argus never calls 911 for you — it arms you with the right information and number so you can.
+Everything runs on your Mac. No cloud, no accounts, no telephony fees. Argus never calls 911 for you - it arms you with the right information and number so you can.
 
 ---
 
@@ -31,7 +31,7 @@ Everything runs on your Mac. No cloud, no accounts, no telephony fees. Argus nev
 
 There are two phases, both driven by texts to your number.
 
-### Phase 1 — Register (before an emergency)
+### Phase 1 - Register (before an emergency)
 
 ```
 someone texts your number (anything at all)
@@ -42,12 +42,12 @@ someone texts your number (anything at all)
    └─> saved to a local SQLite database
 ```
 
-### Phase 2 — Emergency (later)
+### Phase 2 - Emergency (later)
 
 ```
 a registered victim texts "help ..."  (or any message the AI reads as an emergency)
    └─> one auto-reply: "Emergency services are being sent to your location. You can
-       keep moving to stay safe — we can see your live location."
+       keep moving to stay safe - we can see your live location."
    └─> a Help request appears in the console with:
          • their message and the full conversation thread
          • their medical profile (conditions, allergies, meds, emergency contact)
@@ -65,7 +65,7 @@ a registered victim texts "help ..."  (or any message the AI reads as an emergen
 | **Find My** | Argus reads who's sharing their location and where, by automating the Find My app (its data is encrypted on disk). |
 | **OpenStreetMap** | Nominatim geocodes a location to a street address + ZIP; the Overpass API lists nearby police departments with phone numbers. |
 | **SQLite** | Local database of people, messages, help requests, and saved dispatch numbers. |
-| **Console** | A web UI at `http://localhost:4200` — Help requests, Live feed, People, Dispatch numbers. |
+| **Console** | A web UI at `http://localhost:4200` - Help requests, Live feed, People, Dispatch numbers. |
 
 ---
 
@@ -119,7 +119,7 @@ Defaults are sensible; the common things to set are in [Configuration](#configur
 
 ### 6. (For location) grant the Find My automation permission
 
-The first time Argus scans Find My, macOS will prompt to let your terminal control **System Events** and **FindMy** — click **Allow**. See [Find My setup and permissions](#find-my-setup-and-permissions).
+The first time Argus scans Find My, macOS will prompt to let your terminal control **System Events** and **FindMy** - click **Allow**. See [Find My setup and permissions](#find-my-setup-and-permissions).
 
 ---
 
@@ -147,10 +147,10 @@ You can drive the entire flow locally with the **simulator**, which injects a te
 Open two terminals:
 
 ```bash
-# Terminal 1 — the console
+# Terminal 1 - the console
 npm run dev
 
-# Terminal 2 — simulate a person registering, then having an emergency
+# Terminal 2 - simulate a person registering, then having an emergency
 npm run simulate -- +15551234567 "hi"                 # first contact → registration begins
 npm run simulate -- +15551234567 "Jordan Rivera"      # answers the name question
 npm run simulate -- +15551234567 "asthma"             # conditions
@@ -179,10 +179,10 @@ Only texts that arrive **after** you start Argus are handled, so start it first.
 
 Open **http://localhost:4200**. The header shows readiness lights (Ollama, model, Messages, Find My).
 
-- **Help requests** — the argus-team's main view. Each card shows the person's name and message, the full conversation thread, a box to **send them your own message**, their medical profile, their **Find My location → address + map link**, the **ZIP pre-filled** with dispatch numbers auto-loaded (click **use** to attach one), a place to save a dispatch number and a location note, and **Mark handled**.
-- **Live feed** — every inbound/outbound text as it arrives, newest first.
-- **People** — every registered victim, their intake status, and a field to set each victim's **Find My name** so their location resolves.
-- **Dispatch numbers** — the saved ZIP → agency/number table. Numbers you "use" from a lookup are saved here; you can also add or delete them by hand.
+- **Help requests** - the argus-team's main view. Each card shows the person's name and message, the full conversation thread, a box to **send them your own message**, their medical profile, their **Find My location → address + map link**, the **ZIP pre-filled** with dispatch numbers auto-loaded (click **use** to attach one), a place to save a dispatch number and a location note, and **Mark handled**.
+- **Live feed** - every inbound/outbound text as it arrives, newest first.
+- **People** - every registered victim, their intake status, and a field to set each victim's **Find My name** so their location resolves.
+- **Dispatch numbers** - the saved ZIP → agency/number table. Numbers you "use" from a lookup are saved here; you can also add or delete them by hand.
 
 ---
 
@@ -212,7 +212,7 @@ Apple encrypts the Find My data on disk, so Argus reads it by **automating the F
 To make it work:
 
 1. **Someone must be sharing their location with you** in Find My (Find My → People).
-2. **Grant automation permission**: the first Find My scan triggers a macOS prompt to let your terminal control **System Events** and **FindMy** — click **Allow**. You can manage this later in **System Settings → Privacy & Security → Automation** (and **Accessibility**).
+2. **Grant automation permission**: the first Find My scan triggers a macOS prompt to let your terminal control **System Events** and **FindMy** - click **Allow**. You can manage this later in **System Settings → Privacy & Security → Automation** (and **Accessibility**).
 3. **Map the victim to their Find My name**: in the console's **People** tab (or right on a help card), set their **Find My name** to match how they appear in Find My (e.g. `Lysander Elgar`). If their registered name already matches a Find My friend, Argus links it automatically.
 
 > Running this repo through Claude Code? The Find My scan is gated behind a scoped permission for `scripts/findmy.applescript`, stored in `.claude/settings.local.json`. Running it yourself with `npm run dev`, you just approve the normal macOS Automation prompt.
@@ -225,10 +225,10 @@ If nobody shares location, you can still read it in Find My yourself and type th
 
 Local SQLite at `argus.sqlite` (gitignored):
 
-- `people` — the registry and each person's intake state and Find My name.
-- `messages` — every inbound/outbound text, per person.
-- `help_requests` — emergencies (open/handled) with the ZIP and dispatch number you used.
-- `dispatch` — ZIP → agency/number, saved from open-data lookups or edited by hand.
+- `people` - the registry and each person's intake state and Find My name.
+- `messages` - every inbound/outbound text, per person.
+- `help_requests` - emergencies (open/handled) with the ZIP and dispatch number you used.
+- `dispatch` - ZIP → agency/number, saved from open-data lookups or edited by hand.
 
 Delete `argus.sqlite*` to start fresh.
 
@@ -236,15 +236,15 @@ Delete `argus.sqlite*` to start fresh.
 
 ## Troubleshooting
 
-- **Console shows Ollama/model red** — Ollama isn't running or the model isn't pulled. `ollama serve` and `ollama pull llama3.2:3b`.
-- **Messages red / "Reading Messages database failed"** — grant **Full Disk Access** to your terminal, then reopen it.
-- **Find My red or no location** — grant the **Automation** prompt on first scan; make sure someone is sharing with you; set the person's **Find My name** in the People tab; use **rescan Find My** on a card.
-- **Replies aren't sending** — `AUTO_REPLY` must be `true`, the number must be allowed by `REPLY_ALLOWLIST` (if set), and macOS may prompt once to let your terminal control **Messages** — click Allow. iMessage sends to any iMessage user; SMS needs Text Message Forwarding.
-- **No texts are picked up** — Argus only handles texts that arrive **after** it starts. Restart it, then text.
-- **"no such column" on startup** — a stale `DB_PATH` pointing at an incompatible old database. Use the default `argus.sqlite` or delete the old file.
+- **Console shows Ollama/model red** - Ollama isn't running or the model isn't pulled. `ollama serve` and `ollama pull llama3.2:3b`.
+- **Messages red / "Reading Messages database failed"** - grant **Full Disk Access** to your terminal, then reopen it.
+- **Find My red or no location** - grant the **Automation** prompt on first scan; make sure someone is sharing with you; set the person's **Find My name** in the People tab; use **rescan Find My** on a card.
+- **Replies aren't sending** - `AUTO_REPLY` must be `true`, the number must be allowed by `REPLY_ALLOWLIST` (if set), and macOS may prompt once to let your terminal control **Messages** - click Allow. iMessage sends to any iMessage user; SMS needs Text Message Forwarding.
+- **No texts are picked up** - Argus only handles texts that arrive **after** it starts. Restart it, then text.
+- **"no such column" on startup** - a stale `DB_PATH` pointing at an incompatible old database. Use the default `argus.sqlite` or delete the old file.
 
 ---
 
 ## Safety
 
-Argus assists a **human argus-team operator** relaying real emergencies. It does not contact 911 for you. The open-data dispatch numbers come from OpenStreetMap and may be incomplete or out of date — **verify numbers before relying on them, and call 911 when in doubt.**
+Argus assists a **human argus-team operator** relaying real emergencies. It does not contact 911 for you. The open-data dispatch numbers come from OpenStreetMap and may be incomplete or out of date - **verify numbers before relying on them, and call 911 when in doubt.**
