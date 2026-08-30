@@ -248,3 +248,9 @@ Delete `argus.sqlite*` to start fresh.
 ## Safety
 
 Argus assists a **human argus-team operator** relaying real emergencies. It does not contact 911 for you. The open-data dispatch numbers come from OpenStreetMap and may be incomplete or out of date - **verify numbers before relying on them, and call 911 when in doubt.**
+
+---
+
+## Disclaimer
+
+AI was used in the process of building this project.
