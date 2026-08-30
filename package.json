@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx src/main.ts",
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "simulate": "tsx scripts/simulate.ts"
   },
   "keywords": [],
   "author": "",
