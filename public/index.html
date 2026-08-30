@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guardian Console</title>
+<title>Argus Console</title>
 <style>
   :root { --crimson:#B11226; --ember:#E2401B; --ink:#171717; --muted:#6B6B6B; --line:#E6E3E1; --ok:#1a7f37; --paper:#faf9f8; }
   * { box-sizing:border-box; }
@@ -45,7 +45,7 @@
 </style>
 </head>
 <body>
-<header><div class="mark">G</div><strong id="svc">Guardian</strong> <span class="muted">dispatch console</span>
+<header><div class="mark">A</div><strong id="svc">Argus</strong> <span class="muted">argus-team console</span>
   <div class="checks" id="checks"></div>
 </header>
 <datalist id="fmfriends"></datalist>
@@ -53,7 +53,7 @@
   <div class="tabs">
     <div class="tab active" data-t="help">Help requests</div>
     <div class="tab" data-t="feed">Live feed</div>
-    <div class="tab" data-t="people">People</div>
+    <div class="tab" data-t="people">Victims</div>
     <div class="tab" data-t="dispatch">Dispatch numbers</div>
   </div>
   <div id="view-help"></div>
@@ -108,7 +108,7 @@ async function renderHelp() {
   if (ae && (ae.classList.contains("opmsg") || ae.classList.contains("zip") || ae.classList.contains("dnum") || ae.classList.contains("lnote") || ae.classList.contains("fmname"))) return; // don't interrupt typing
   const d = await api("/api/help");
   const el = $("view-help");
-  if (!d.requests.length) { el.innerHTML = '<div class="card"><div class="empty">No help requests. When a registered person texts for help, it appears here.</div></div>'; return; }
+  if (!d.requests.length) { el.innerHTML = '<div class="card"><div class="empty">No help requests. When a registered victim texts for help, it appears here.</div></div>'; return; }
   el.innerHTML = '<div class="card">' + d.requests.map(r => {
     const p = r.person;
     const addr = r.address ? `<span class="loc">${esc(r.address.address)}</span> &middot; <a href="${esc(r.address.mapsUrl)}" target="_blank" rel="noopener">map</a>` : "";
@@ -198,9 +198,9 @@ async function renderHelp() {
 
 async function renderPeople() {
   const d = await api("/api/people");
-  $("view-people").innerHTML = '<div class="card"><h2>Registered people (' + d.people.length + ')</h2>' +
+  $("view-people").innerHTML = '<div class="card"><h2>Registered victims (' + d.people.length + ')</h2>' +
     (d.people.length ? d.people.map(p => `<div class="row"><span><b>${esc(p.name||"(no name)")}</b> ${esc(p.phone)} ${p.intake_done?'':'<span class="muted">intake in progress</span>'}<br><span class="muted">${esc([p.medical,p.allergies&&"allergies: "+p.allergies,p.medications].filter(Boolean).join(" · "))}</span></span>
-      <span><input class="fm" placeholder="Find My name" value="${esc(p.findmy_name||'')}" data-ph="${esc(p.phone)}" size="14"><button class="sec fmsave" data-ph="${esc(p.phone)}">set</button></span></div>`).join("") : '<div class="empty">Nobody registered yet. When a new number texts, intake starts automatically.</div>') + '</div>';
+      <span><input class="fm" placeholder="Find My name" value="${esc(p.findmy_name||'')}" data-ph="${esc(p.phone)}" size="14"><button class="sec fmsave" data-ph="${esc(p.phone)}">set</button></span></div>`).join("") : '<div class="empty">No victims registered yet. When a new number texts, registration starts automatically.</div>') + '</div>';
   $("view-people").querySelectorAll(".fmsave").forEach(b => b.onclick = () => {
     const inp = $("view-people").querySelector('.fm[data-ph="'+b.dataset.ph.replace(/"/g,'')+'"]');
     api("/api/people/" + encodeURIComponent(b.dataset.ph), { findmy_name: inp.value.trim() }).then(render);

@@ -1,7 +1,7 @@
 import type { Db } from "./db.js";
 import { logger } from "./logger.js";
 
-const UA = "Guardian911/0.1 (personal emergency dispatch tool)";
+const UA = "Argus911/0.1 (personal emergency dispatch tool)";
 
 export interface DispatchCandidate { agency: string; phone: string; address: string; distanceKm: number; source: string }
 

@@ -15,9 +15,9 @@ export interface Config {
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return {
     port: Number(env.PORT) || 4200,
-    serviceName: env.SERVICE_NAME?.trim() || "Guardian",
+    serviceName: env.SERVICE_NAME?.trim() || "Argus",
     ollamaModel: env.OLLAMA_MODEL?.trim() || "llama3.2:3b",
-    dbPath: path.resolve(env.DB_PATH?.trim() || "guardian.sqlite"),
+    dbPath: path.resolve(env.DB_PATH?.trim() || "argus.sqlite"),
     pollMs: Number(env.POLL_MS) || 4000,
     autoReply: env.AUTO_REPLY !== "false",
     operatorToken: env.OPERATOR_TOKEN?.trim() || "",

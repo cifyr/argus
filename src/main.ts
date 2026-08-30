@@ -16,7 +16,7 @@ void refreshFindMy(true);
 setInterval(() => void refreshFindMy(), 90_000);
 
 const app = createServer(config, db);
-app.listen(config.port, () => logger.info("guardian.listening", {
+app.listen(config.port, () => logger.info("argus.listening", {
   console: `http://localhost:${config.port}`,
   service: config.serviceName,
   autoReply: config.autoReply,

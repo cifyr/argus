@@ -1,11 +1,13 @@
-# Guardian — 911 intake & dispatch console
+# Argus — 911 intake & dispatch console
 
-Guardian is a **local Mac tool** that helps one person (the operator) relay emergencies for others.
+Argus is a **local Mac tool** that helps a responder team (the **argus-team**) relay emergencies for the people they look after (each a **victim**).
+
+> **Terminology:** the **victim** is the person who registers and later texts for help. The **argus-team** is whoever runs this console and receives the victim's messages.
 
 1. **People register by texting** your number. A local AI (Ollama) asks for their medical details over SMS and asks them to share their location in **Find My**.
-2. **Later, when they text for help**, an operator console shows their message, their medical profile, and their live location — turned into a real street address — plus the **dispatch phone number** for that area, pulled from open data. You call and relay it.
+2. **Later, when they text for help**, an argus-team console shows their message, their medical profile, and their live location — turned into a real street address — plus the **dispatch phone number** for that area, pulled from open data. You call and relay it.
 
-Everything runs on your Mac. No cloud, no accounts, no telephony fees. Guardian never calls 911 for you — it arms you with the right information and number so you can.
+Everything runs on your Mac. No cloud, no accounts, no telephony fees. Argus never calls 911 for you — it arms you with the right information and number so you can.
 
 ---
 
@@ -43,7 +45,7 @@ someone texts your number (anything at all)
 ### Phase 2 — Emergency (later)
 
 ```
-a registered person texts "help ..."  (or any message the AI reads as an emergency)
+a registered victim texts "help ..."  (or any message the AI reads as an emergency)
    └─> one auto-reply: "Emergency services are being sent to your location. You can
        keep moving to stay safe — we can see your live location."
    └─> a Help request appears in the console with:
@@ -58,9 +60,9 @@ a registered person texts "help ..."  (or any message the AI reads as an emergen
 
 | Component | What it does |
 |---|---|
-| **Messages (`chat.db`)** | Guardian reads your incoming texts (read-only) and can send replies through the Messages app. |
+| **Messages (`chat.db`)** | Argus reads your incoming texts (read-only) and can send replies through the Messages app. |
 | **Ollama** | A local LLM runs the intake conversation, extracts clean fields, and decides whether a message is an emergency. |
-| **Find My** | Guardian reads who's sharing their location and where, by automating the Find My app (its data is encrypted on disk). |
+| **Find My** | Argus reads who's sharing their location and where, by automating the Find My app (its data is encrypted on disk). |
 | **OpenStreetMap** | Nominatim geocodes a location to a street address + ZIP; the Overpass API lists nearby police departments with phone numbers. |
 | **SQLite** | Local database of people, messages, help requests, and saved dispatch numbers. |
 | **Console** | A web UI at `http://localhost:4200` — Help requests, Live feed, People, Dispatch numbers. |
@@ -84,8 +86,8 @@ No paid services, API keys, or accounts are required.
 ### 1. Get the code and install dependencies
 
 ```bash
-git clone https://github.com/cifyr/hackathon911.git guardian
-cd guardian
+git clone https://github.com/cifyr/argus.git argus
+cd argus
 npm install
 ```
 
@@ -104,7 +106,7 @@ Make sure Ollama is running (the menu-bar app, or `ollama serve`).
 
 ### 4. Grant Full Disk Access (to read your messages)
 
-Guardian reads `~/Library/Messages/chat.db`, which macOS protects.
+Argus reads `~/Library/Messages/chat.db`, which macOS protects.
 
 - **System Settings → Privacy & Security → Full Disk Access** → add and enable your **terminal app** (Terminal, iTerm, etc.). Quit and reopen the terminal afterward.
 
@@ -117,7 +119,7 @@ Defaults are sensible; the common things to set are in [Configuration](#configur
 
 ### 6. (For location) grant the Find My automation permission
 
-The first time Guardian scans Find My, macOS will prompt to let your terminal control **System Events** and **FindMy** — click **Allow**. See [Find My setup and permissions](#find-my-setup-and-permissions).
+The first time Argus scans Find My, macOS will prompt to let your terminal control **System Events** and **FindMy** — click **Allow**. See [Find My setup and permissions](#find-my-setup-and-permissions).
 
 ---
 
@@ -159,7 +161,7 @@ npm run simulate -- +15551234567 "my sister 314-555-2020"  # emergency contact �
 npm run simulate -- +15551234567 "help I can't breathe"    # emergency → a Help request appears
 ```
 
-Watch **http://localhost:4200**: the person appears under **People**, every message shows in the **Live feed**, and the emergency shows under **Help requests** with the profile and (if you've mapped their Find My name) their location.
+Watch **http://localhost:4200**: the victim appears under **People**, every message shows in the **Live feed**, and the emergency shows under **Help requests** with the profile and (if you've mapped their Find My name) their location.
 
 ### Testing with a real phone, safely
 
@@ -169,7 +171,7 @@ Have a friend text your number. To make sure **only they** get replies while you
 AUTO_REPLY=true REPLY_ALLOWLIST="+1XXXXXXXXXX" npm run dev
 ```
 
-Only texts that arrive **after** you start Guardian are handled, so start it first.
+Only texts that arrive **after** you start Argus are handled, so start it first.
 
 ---
 
@@ -177,9 +179,9 @@ Only texts that arrive **after** you start Guardian are handled, so start it fir
 
 Open **http://localhost:4200**. The header shows readiness lights (Ollama, model, Messages, Find My).
 
-- **Help requests** — the operator's main view. Each card shows the person's name and message, the full conversation thread, a box to **send them your own message**, their medical profile, their **Find My location → address + map link**, the **ZIP pre-filled** with dispatch numbers auto-loaded (click **use** to attach one), a place to save a dispatch number and a location note, and **Mark handled**.
+- **Help requests** — the argus-team's main view. Each card shows the person's name and message, the full conversation thread, a box to **send them your own message**, their medical profile, their **Find My location → address + map link**, the **ZIP pre-filled** with dispatch numbers auto-loaded (click **use** to attach one), a place to save a dispatch number and a location note, and **Mark handled**.
 - **Live feed** — every inbound/outbound text as it arrives, newest first.
-- **People** — everyone registered, their intake status, and a field to set each person's **Find My name** so their location resolves.
+- **People** — every registered victim, their intake status, and a field to set each victim's **Find My name** so their location resolves.
 - **Dispatch numbers** — the saved ZIP → agency/number table. Numbers you "use" from a lookup are saved here; you can also add or delete them by hand.
 
 ---
@@ -190,13 +192,13 @@ Set these in `.env` (copy from `.env.example`) or inline before `npm run dev`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `SERVICE_NAME` | `Guardian` | Name used in the texts people receive. |
+| `SERVICE_NAME` | `Argus` | Name used in the texts people receive. |
 | `OLLAMA_MODEL` | `llama3.2:3b` | Local model for intake + emergency classification. |
 | `AUTO_REPLY` | `true` | Send intake/emergency replies over SMS. `false` = log what it would say, send nothing. |
 | `REPLY_ALLOWLIST` | (empty) | Comma-separated numbers that may receive auto-replies. Others are still processed and logged but never texted. Empty = reply to everyone (when `AUTO_REPLY=true`). |
 | `PORT` | `4200` | Console port. |
 | `POLL_MS` | `4000` | How often to check for new texts. |
-| `DB_PATH` | `guardian.sqlite` | SQLite file path. |
+| `DB_PATH` | `argus.sqlite` | SQLite file path. |
 | `OPERATOR_TOKEN` | (empty) | If set, the console requires `?token=...` to open. |
 
 **Sessions:** an emergency auto-reply and a new help request are created only on the **first** emergency text of a session; follow-up texts within **3 hours** are added to the thread without re-replying. After 3 hours of quiet, the next emergency starts a fresh session.
@@ -205,13 +207,13 @@ Set these in `.env` (copy from `.env.example`) or inline before `npm run dev`.
 
 ## Find My setup and permissions
 
-Apple encrypts the Find My data on disk, so Guardian reads it by **automating the Find My app** through macOS Accessibility. It pairs each sharing friend's map pin to the nearest map landmarks, then geocodes the best one to a **street address + map link**. (An exact house number isn't always in the map data; the map link always points to the precise spot.)
+Apple encrypts the Find My data on disk, so Argus reads it by **automating the Find My app** through macOS Accessibility. It pairs each sharing friend's map pin to the nearest map landmarks, then geocodes the best one to a **street address + map link**. (An exact house number isn't always in the map data; the map link always points to the precise spot.)
 
 To make it work:
 
 1. **Someone must be sharing their location with you** in Find My (Find My → People).
 2. **Grant automation permission**: the first Find My scan triggers a macOS prompt to let your terminal control **System Events** and **FindMy** — click **Allow**. You can manage this later in **System Settings → Privacy & Security → Automation** (and **Accessibility**).
-3. **Map the person to their Find My name**: in the console's **People** tab (or right on a help card), set their **Find My name** to match how they appear in Find My (e.g. `Lysander Elgar`). If their registered name already matches a Find My friend, Guardian links it automatically.
+3. **Map the victim to their Find My name**: in the console's **People** tab (or right on a help card), set their **Find My name** to match how they appear in Find My (e.g. `Lysander Elgar`). If their registered name already matches a Find My friend, Argus links it automatically.
 
 > Running this repo through Claude Code? The Find My scan is gated behind a scoped permission for `scripts/findmy.applescript`, stored in `.claude/settings.local.json`. Running it yourself with `npm run dev`, you just approve the normal macOS Automation prompt.
 
@@ -221,14 +223,14 @@ If nobody shares location, you can still read it in Find My yourself and type th
 
 ## How the data is stored
 
-Local SQLite at `guardian.sqlite` (gitignored):
+Local SQLite at `argus.sqlite` (gitignored):
 
 - `people` — the registry and each person's intake state and Find My name.
 - `messages` — every inbound/outbound text, per person.
 - `help_requests` — emergencies (open/handled) with the ZIP and dispatch number you used.
 - `dispatch` — ZIP → agency/number, saved from open-data lookups or edited by hand.
 
-Delete `guardian.sqlite*` to start fresh.
+Delete `argus.sqlite*` to start fresh.
 
 ---
 
@@ -238,11 +240,11 @@ Delete `guardian.sqlite*` to start fresh.
 - **Messages red / "Reading Messages database failed"** — grant **Full Disk Access** to your terminal, then reopen it.
 - **Find My red or no location** — grant the **Automation** prompt on first scan; make sure someone is sharing with you; set the person's **Find My name** in the People tab; use **rescan Find My** on a card.
 - **Replies aren't sending** — `AUTO_REPLY` must be `true`, the number must be allowed by `REPLY_ALLOWLIST` (if set), and macOS may prompt once to let your terminal control **Messages** — click Allow. iMessage sends to any iMessage user; SMS needs Text Message Forwarding.
-- **No texts are picked up** — Guardian only handles texts that arrive **after** it starts. Restart it, then text.
-- **"no such column" on startup** — a stale `DB_PATH` pointing at an incompatible old database. Use the default `guardian.sqlite` or delete the old file.
+- **No texts are picked up** — Argus only handles texts that arrive **after** it starts. Restart it, then text.
+- **"no such column" on startup** — a stale `DB_PATH` pointing at an incompatible old database. Use the default `argus.sqlite` or delete the old file.
 
 ---
 
 ## Safety
 
-Guardian assists a **human operator** relaying real emergencies. It does not contact 911 for you. The open-data dispatch numbers come from OpenStreetMap and may be incomplete or out of date — **verify numbers before relying on them, and call 911 when in doubt.**
+Argus assists a **human argus-team operator** relaying real emergencies. It does not contact 911 for you. The open-data dispatch numbers come from OpenStreetMap and may be incomplete or out of date — **verify numbers before relying on them, and call 911 when in doubt.**

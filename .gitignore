@@ -4,7 +4,7 @@ node_modules/
 .chrome-profile/
 .inspect/
 *.log
-guardian.sqlite*
+argus.sqlite*
 
 # Env: ignore all .env variants except the checked-in template.
 .env

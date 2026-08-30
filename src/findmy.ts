@@ -62,7 +62,7 @@ export function locationForName(name: string): string | null {
   return null;
 }
 
-const UA = "Guardian911/0.1 (personal emergency tool)";
+const UA = "Argus911/0.1 (personal emergency tool)";
 const CHAINS = /\b(qdoba|subway|starbucks|mcdonald|chipotle|panera|chick-fil-a|dominos?|taco bell|fedex|ups store|walgreens|cvs|dunkin|wendy|burger king|7-eleven)\b/i;
 const geoCache = new Map<string, { address: string; zip: string; lat: number; lon: number; mapsUrl: string } | null>();
 
